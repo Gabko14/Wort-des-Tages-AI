@@ -44,4 +44,4 @@ Aktuelle Situation und Pain
 
 **Wie sollte die App reagieren, wenn du ein Wort nicht sofort weisst?**
 
-→ „Am besten eine kleine Hilfe geben, z. B. ein Synonym oder einen Beispielsatz. Aber nicht gleich die Lösung – sonst merke ich es mir nicht.“  
+→ „Am besten eine kleine Hilfe geben, z. B. ein Synonym oder einen Beispielsatz. Aber nicht gleich die Lösung – sonst merke ich es mir nicht.“
