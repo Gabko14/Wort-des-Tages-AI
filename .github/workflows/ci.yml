@@ -19,10 +19,12 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm config set fetch-retry-maxtimeout 600000
+          npm config set fetch-retry-mintimeout 10000
+          npm ci --verbose
 
       - name: Lint
         run: npm run lint
