@@ -1,35 +1,145 @@
-import { StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
+import { WordCard } from '@/components/WordCard';
+import { Wort } from '@/services/database';
+import { initDatabase } from '@/services/database';
+import { getOrGenerateTodaysWords } from '@/services/wordService';
 
-export default function TabOneScreen() {
+export default function HomeScreen() {
+  const [words, setWords] = useState<Wort[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadWords = async () => {
+    try {
+      setError(null);
+      await initDatabase();
+      const todaysWords = await getOrGenerateTodaysWords();
+      setWords(todaysWords);
+    } catch (err) {
+      console.error('Error loading words:', err);
+      setError('Fehler beim Laden der Wörter');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadWords();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadWords();
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>Lade Wörter des Tages...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.header}>
+        <Text style={styles.title}>Wörter des Tages</Text>
+        <Text style={styles.subtitle}>
+          {new Date().toLocaleDateString('de-DE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </Text>
+      </View>
+
+      {words.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Keine Wörter für heute gefunden.</Text>
+        </View>
+      ) : (
+        <View style={styles.wordsList}>
+          {words.map((word) => (
+            <WordCard key={word.id} word={word} />
+          ))}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   container: {
+    padding: 20,
+  },
+  centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
+  },
+  header: {
+    marginBottom: 24,
+    backgroundColor: 'transparent',
   },
   title: {
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: 'bold',
+    marginBottom: 4,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  subtitle: {
+    fontSize: 16,
+    opacity: 0.7,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#dc3545',
+    textAlign: 'center',
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  emptyText: {
+    fontSize: 16,
+    opacity: 0.7,
+    textAlign: 'center',
+  },
+  wordsList: {
+    backgroundColor: 'transparent',
   },
 });
