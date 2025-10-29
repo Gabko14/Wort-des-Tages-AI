@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -8,6 +8,7 @@ import {
 
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
+import { useDailyRefresh } from '@/hooks/useDailyRefresh';
 import { Wort } from '@/services/database';
 import { initDatabase } from '@/services/database';
 import { getOrGenerateTodaysWords } from '@/services/wordService';
@@ -18,7 +19,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadWords = async () => {
+  const loadWords = useCallback(async () => {
     try {
       setError(null);
       await initDatabase();
@@ -31,11 +32,13 @@ export default function HomeScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadWords();
-  }, []);
+  }, [loadWords]);
+
+  useDailyRefresh(loadWords);
 
   const onRefresh = () => {
     setRefreshing(true);
