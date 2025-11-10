@@ -1,21 +1,14 @@
-import { getDatabase, UserSettings, Wort } from './database';
+import { getDatabase, Wort } from './database';
+import {
+  AppSettings,
+  getFrequencyClasses,
+  getSelectedWordTypes,
+  loadSettings,
+} from './settingsService';
 
 function getTodayDateString(): string {
   const today = new Date();
   return today.toISOString().split('T')[0];
-}
-
-export async function getUserSettings(): Promise<UserSettings> {
-  const db = await getDatabase();
-  const result = await db.getFirstAsync<UserSettings>(
-    'SELECT * FROM user_settings WHERE id = 1'
-  );
-
-  if (!result) {
-    return { id: 1, anzahl_woerter: 3 };
-  }
-
-  return result;
 }
 
 export async function getTodaysWords(): Promise<Wort[]> {
@@ -55,18 +48,36 @@ export async function getTodaysWords(): Promise<Wort[]> {
   return words;
 }
 
-export async function selectRandomWords(count: number): Promise<Wort[]> {
+export interface WordSelectionOptions {
+  count: number;
+  wordTypes: string[];
+  frequencyClasses: string[];
+}
+
+export async function selectRandomWords(
+  options: WordSelectionOptions
+): Promise<Wort[]> {
   const db = await getDatabase();
+  const { count, wordTypes, frequencyClasses } = options;
 
-  const words = await db.getAllAsync<Wort>(
-    `SELECT * FROM wort 
-     WHERE wortklasse NOT IN ('Affix', 'Konjunktion') 
-     AND frequenzklasse != 'n/a'
-     ORDER BY RANDOM() 
-     LIMIT ?`,
-    [count]
-  );
+  if (wordTypes.length === 0 || frequencyClasses.length === 0) {
+    return [];
+  }
 
+  const wordTypePlaceholders = wordTypes.map(() => '?').join(',');
+  const frequencyPlaceholders = frequencyClasses.map(() => '?').join(',');
+
+  const query = `
+    SELECT * FROM wort 
+    WHERE wortklasse IN (${wordTypePlaceholders})
+    AND frequenzklasse IN (${frequencyPlaceholders})
+    ORDER BY RANDOM() 
+    LIMIT ?
+  `;
+
+  const params = [...wordTypes, ...frequencyClasses, count];
+
+  const words = await db.getAllAsync<Wort>(query, params);
   return words;
 }
 
@@ -86,6 +97,14 @@ export async function saveTodaysWords(words: Wort[]): Promise<void> {
   );
 }
 
+function buildSelectionOptions(settings: AppSettings): WordSelectionOptions {
+  return {
+    count: settings.wordCount,
+    wordTypes: getSelectedWordTypes(settings.wordTypes),
+    frequencyClasses: getFrequencyClasses(settings.frequencyRange),
+  };
+}
+
 export async function getOrGenerateTodaysWords(): Promise<Wort[]> {
   let words = await getTodaysWords();
 
@@ -93,10 +112,10 @@ export async function getOrGenerateTodaysWords(): Promise<Wort[]> {
     return words;
   }
 
-  const settings = await getUserSettings();
-  const count = settings.anzahl_woerter || 3;
+  const settings = await loadSettings();
+  const options = buildSelectionOptions(settings);
 
-  words = await selectRandomWords(count);
+  words = await selectRandomWords(options);
 
   if (words.length > 0) {
     await saveTodaysWords(words);
