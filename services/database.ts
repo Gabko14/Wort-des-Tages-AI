@@ -1,5 +1,5 @@
 import { Asset } from 'expo-asset';
-import { Directory, File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system/next';
 import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'dwds.db';
