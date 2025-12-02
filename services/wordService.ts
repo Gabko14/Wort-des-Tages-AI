@@ -105,6 +105,27 @@ function buildSelectionOptions(settings: AppSettings): WordSelectionOptions {
   };
 }
 
+export async function deleteTodaysWords(): Promise<void> {
+  const db = await getDatabase();
+  const today = getTodayDateString();
+  await db.runAsync('DELETE FROM wort_des_tages WHERE date = ?', [today]);
+}
+
+export async function regenerateWords(): Promise<Wort[]> {
+  await deleteTodaysWords();
+
+  const settings = await loadSettings();
+  const options = buildSelectionOptions(settings);
+
+  const words = await selectRandomWords(options);
+
+  if (words.length > 0) {
+    await saveTodaysWords(words);
+  }
+
+  return words;
+}
+
 export async function getOrGenerateTodaysWords(): Promise<Wort[]> {
   let words = await getTodaysWords();
 

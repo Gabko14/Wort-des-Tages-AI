@@ -21,6 +21,7 @@ import {
   cancelAllNotifications,
   scheduleDailyNotification,
 } from '@/services/notificationService';
+import { regenerateWords } from '@/services/wordService';
 
 const TIME_OPTIONS = [
   '07:00',
@@ -44,15 +45,23 @@ export default function SettingsScreen() {
     });
   }, []);
 
-  const updateSettings = useCallback(async (newSettings: AppSettings) => {
-    setSettings(newSettings);
-    setSaving(true);
-    await saveSettings(newSettings);
-    setSaving(false);
-  }, []);
+  const updateSettings = useCallback(
+    async (newSettings: AppSettings, shouldRegenerateWords = false) => {
+      setSettings(newSettings);
+      setSaving(true);
+      await saveSettings(newSettings);
+
+      if (shouldRegenerateWords) {
+        await regenerateWords();
+      }
+
+      setSaving(false);
+    },
+    []
+  );
 
   const handleWordCountChange = (value: number) => {
-    updateSettings({ ...settings, wordCount: Math.round(value) });
+    updateSettings({ ...settings, wordCount: Math.round(value) }, true);
   };
 
   const handleWordTypeToggle = (type: keyof AppSettings['wordTypes']) => {
@@ -62,11 +71,11 @@ export default function SettingsScreen() {
     };
     const activeCount = Object.values(newWordTypes).filter(Boolean).length;
     if (activeCount === 0) return;
-    updateSettings({ ...settings, wordTypes: newWordTypes });
+    updateSettings({ ...settings, wordTypes: newWordTypes }, true);
   };
 
   const handleFrequencyChange = (range: FrequencyRange) => {
-    updateSettings({ ...settings, frequencyRange: range });
+    updateSettings({ ...settings, frequencyRange: range }, true);
   };
 
   const handleNotificationToggle = async (enabled: boolean) => {
@@ -78,8 +87,8 @@ export default function SettingsScreen() {
         updateSettings({ ...settings, notificationsEnabled: true });
       } else {
         Alert.alert(
-          'Berechtigung erforderlich',
-          'Bitte erlaube Benachrichtigungen in den Geräteeinstellungen.'
+          'Nicht verfügbar',
+          'Benachrichtigungen sind in Expo Go nicht verfügbar. Bitte verwende einen Development Build für diese Funktion.'
         );
       }
     } else {
