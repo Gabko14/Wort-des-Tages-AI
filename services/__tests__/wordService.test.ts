@@ -1,13 +1,14 @@
 import * as database from '../database';
+import * as settingsService from '../settingsService';
 import {
   getOrGenerateTodaysWords,
   getTodaysWords,
-  getUserSettings,
   saveTodaysWords,
   selectRandomWords,
 } from '../wordService';
 
 jest.mock('../database');
+jest.mock('../settingsService');
 
 const mockDb = {
   getFirstAsync: jest.fn(),
@@ -35,32 +36,32 @@ const mockWort2 = {
   frequenzklasse: '2',
 };
 
+const mockSettings: settingsService.AppSettings = {
+  wordCount: 3,
+  wordTypes: {
+    substantiv: true,
+    verb: true,
+    adjektiv: true,
+  },
+  frequencyRange: 'mittel',
+  notificationsEnabled: false,
+  notificationTime: '09:00',
+};
+
 describe('wordService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (database.getDatabase as jest.Mock).mockResolvedValue(mockDb);
-  });
-
-  describe('getUserSettings', () => {
-    it('should return user settings from database', async () => {
-      const mockSettings = { id: 1, anzahl_woerter: 5 };
-      mockDb.getFirstAsync.mockResolvedValueOnce(mockSettings);
-
-      const result = await getUserSettings();
-
-      expect(result).toEqual(mockSettings);
-      expect(mockDb.getFirstAsync).toHaveBeenCalledWith(
-        'SELECT * FROM user_settings WHERE id = 1'
-      );
-    });
-
-    it('should return default settings when no settings exist', async () => {
-      mockDb.getFirstAsync.mockResolvedValueOnce(null);
-
-      const result = await getUserSettings();
-
-      expect(result).toEqual({ id: 1, anzahl_woerter: 3 });
-    });
+    (settingsService.loadSettings as jest.Mock).mockResolvedValue(mockSettings);
+    (settingsService.getSelectedWordTypes as jest.Mock).mockReturnValue([
+      'Substantiv',
+      'Verb',
+      'Adjektiv',
+    ]);
+    (settingsService.getFrequencyClasses as jest.Mock).mockReturnValue([
+      '2',
+      '3',
+    ]);
   });
 
   describe('getTodaysWords', () => {
@@ -132,31 +133,64 @@ describe('wordService', () => {
     it('should select random words with proper filters', async () => {
       mockDb.getAllAsync.mockResolvedValueOnce([mockWort, mockWort2]);
 
-      const result = await selectRandomWords(2);
+      const result = await selectRandomWords({
+        count: 2,
+        wordTypes: ['Substantiv', 'Adjektiv'],
+        frequencyClasses: ['2', '3'],
+      });
 
       expect(result).toEqual([mockWort, mockWort2]);
       expect(mockDb.getAllAsync).toHaveBeenCalledWith(
         expect.stringContaining('ORDER BY RANDOM()'),
-        [2]
+        ['Substantiv', 'Adjektiv', '2', '3', 2]
       );
     });
 
-    it('should filter out Affix and Konjunktion word classes', async () => {
+    it('should filter by word types and frequency classes', async () => {
       mockDb.getAllAsync.mockResolvedValueOnce([]);
 
-      await selectRandomWords(5);
+      await selectRandomWords({
+        count: 5,
+        wordTypes: ['Verb'],
+        frequencyClasses: ['4', '5'],
+      });
 
       const callArgs = mockDb.getAllAsync.mock.calls[0];
-      expect(callArgs[0]).toContain(
-        "wortklasse NOT IN ('Affix', 'Konjunktion')"
-      );
-      expect(callArgs[0]).toContain("frequenzklasse != 'n/a'");
+      expect(callArgs[0]).toContain('wortklasse IN (?)');
+      expect(callArgs[0]).toContain('frequenzklasse IN (?,?)');
+      expect(callArgs[1]).toEqual(['Verb', '4', '5', 5]);
+    });
+
+    it('should return empty array when no word types provided', async () => {
+      const result = await selectRandomWords({
+        count: 3,
+        wordTypes: [],
+        frequencyClasses: ['2', '3'],
+      });
+
+      expect(result).toEqual([]);
+      expect(mockDb.getAllAsync).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array when no frequency classes provided', async () => {
+      const result = await selectRandomWords({
+        count: 3,
+        wordTypes: ['Substantiv'],
+        frequencyClasses: [],
+      });
+
+      expect(result).toEqual([]);
+      expect(mockDb.getAllAsync).not.toHaveBeenCalled();
     });
 
     it('should return empty array when no words available', async () => {
       mockDb.getAllAsync.mockResolvedValueOnce([]);
 
-      const result = await selectRandomWords(3);
+      const result = await selectRandomWords({
+        count: 3,
+        wordTypes: ['Substantiv'],
+        frequencyClasses: ['2', '3'],
+      });
 
       expect(result).toEqual([]);
     });
@@ -169,10 +203,10 @@ describe('wordService', () => {
       expect(mockDb.runAsync).toHaveBeenCalled();
       const callArgs = mockDb.runAsync.mock.calls[0];
       expect(callArgs[0]).toContain('INSERT INTO wort_des_tages');
-      expect(callArgs[1].length).toBe(6); // 5 word IDs + 1 date
-      expect(callArgs[1][2]).toBe(0); // Third word ID should be 0 (padding)
-      expect(callArgs[1][3]).toBe(0); // Fourth word ID should be 0 (padding)
-      expect(callArgs[1][4]).toBe(0); // Fifth word ID should be 0 (padding)
+      expect(callArgs[1].length).toBe(6);
+      expect(callArgs[1][2]).toBe(0);
+      expect(callArgs[1][3]).toBe(0);
+      expect(callArgs[1][4]).toBe(0);
     });
 
     it('should handle more than 5 words by truncating', async () => {
@@ -188,8 +222,8 @@ describe('wordService', () => {
       await saveTodaysWords(manyWords);
 
       const callArgs = mockDb.runAsync.mock.calls[0];
-      expect(callArgs[1].length).toBe(6); // Should be exactly 6 (5 IDs + 1 date)
-      expect(callArgs[1].slice(0, 5)).toEqual([1, 2, 1, 2, 1]); // First 5 word IDs
+      expect(callArgs[1].length).toBe(6);
+      expect(callArgs[1].slice(0, 5)).toEqual([1, 2, 1, 2, 1]);
     });
   });
 
@@ -207,30 +241,29 @@ describe('wordService', () => {
       const result = await getOrGenerateTodaysWords();
 
       expect(result).toEqual([mockWort, mockWort2]);
-      expect(mockDb.runAsync).not.toHaveBeenCalled(); // Should not save new words
+      expect(mockDb.runAsync).not.toHaveBeenCalled();
     });
 
-    it('should generate new words if none exist', async () => {
-      const mockSettings = { id: 1, anzahl_woerter: 2 };
-
-      // First call returns no words for today
+    it('should generate new words based on settings if none exist', async () => {
       mockDb.getFirstAsync.mockResolvedValueOnce(null);
-      // Second call for user settings
-      mockDb.getFirstAsync.mockResolvedValueOnce(mockSettings);
-      // Call for random words
       mockDb.getAllAsync.mockResolvedValueOnce([mockWort, mockWort2]);
 
       const result = await getOrGenerateTodaysWords();
 
       expect(result).toEqual([mockWort, mockWort2]);
-      expect(mockDb.runAsync).toHaveBeenCalled(); // Should save new words
+      expect(settingsService.loadSettings).toHaveBeenCalled();
+      expect(settingsService.getSelectedWordTypes).toHaveBeenCalled();
+      expect(settingsService.getFrequencyClasses).toHaveBeenCalled();
+      expect(mockDb.runAsync).toHaveBeenCalled();
     });
 
-    it('should use user settings for word count when generating', async () => {
-      const mockSettings = { id: 1, anzahl_woerter: 5 };
+    it('should use settings for word count when generating', async () => {
+      const customSettings = { ...mockSettings, wordCount: 5 };
+      (settingsService.loadSettings as jest.Mock).mockResolvedValue(
+        customSettings
+      );
 
-      mockDb.getFirstAsync.mockResolvedValueOnce(null); // No words today
-      mockDb.getFirstAsync.mockResolvedValueOnce(mockSettings); // User settings
+      mockDb.getFirstAsync.mockResolvedValueOnce(null);
       mockDb.getAllAsync.mockResolvedValueOnce([
         mockWort,
         mockWort2,
@@ -242,20 +275,17 @@ describe('wordService', () => {
       await getOrGenerateTodaysWords();
 
       const randomWordsCall = mockDb.getAllAsync.mock.calls[0];
-      expect(randomWordsCall[1]).toEqual([5]); // Should request 5 words
+      expect(randomWordsCall[1]).toContain(5);
     });
 
     it('should return empty array if no words can be generated', async () => {
-      const mockSettings = { id: 1, anzahl_woerter: 3 };
-
-      mockDb.getFirstAsync.mockResolvedValueOnce(null); // No words today
-      mockDb.getFirstAsync.mockResolvedValueOnce(mockSettings); // User settings
-      mockDb.getAllAsync.mockResolvedValueOnce([]); // No random words available
+      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+      mockDb.getAllAsync.mockResolvedValueOnce([]);
 
       const result = await getOrGenerateTodaysWords();
 
       expect(result).toEqual([]);
-      expect(mockDb.runAsync).not.toHaveBeenCalled(); // Should not save empty words
+      expect(mockDb.runAsync).not.toHaveBeenCalled();
     });
   });
 });
