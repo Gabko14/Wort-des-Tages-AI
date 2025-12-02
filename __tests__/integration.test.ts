@@ -183,7 +183,7 @@ describe('Application Integration Tests', () => {
 
   describe('Error Handling', () => {
     it('should return empty array when no data available', () => {
-      const emptyResult = [];
+      const emptyResult: unknown[] = [];
 
       expect(emptyResult).toEqual([]);
       expect(emptyResult.length).toBe(0);
