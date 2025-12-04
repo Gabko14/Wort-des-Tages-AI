@@ -4,6 +4,8 @@ const SETTINGS_KEY = 'user_settings';
 
 export type FrequencyRange = 'selten' | 'mittel' | 'haeufig';
 
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 export interface AppSettings {
   wordCount: number;
   wordTypes: {
@@ -14,6 +16,7 @@ export interface AppSettings {
   frequencyRange: FrequencyRange;
   notificationsEnabled: boolean;
   notificationTime: string;
+  themeMode: ThemeMode;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -26,6 +29,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   frequencyRange: 'mittel',
   notificationsEnabled: false,
   notificationTime: '09:00',
+  themeMode: 'system',
 };
 
 export async function loadSettings(): Promise<AppSettings> {
