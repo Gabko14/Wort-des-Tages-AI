@@ -9,14 +9,17 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 
-import { Text, View } from '@/components/Themed';
+import { Text, View, useThemeColor } from '@/components/Themed';
 import {
   AppSettings,
   DEFAULT_SETTINGS,
   FrequencyRange,
   loadSettings,
   saveSettings,
+  ThemeMode,
 } from '@/services/settingsService';
+import { useTheme } from '@/context/ThemeContext';
+import { FontAwesome } from '@expo/vector-icons';
 import {
   cancelAllNotifications,
   scheduleDailyNotification,
@@ -37,13 +40,20 @@ export default function SettingsScreen() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { setThemeMode, themeMode } = useTheme();
 
+  // Load settings on mount, but override themeMode with context value to keep in sync
   useEffect(() => {
     loadSettings().then((loaded) => {
       setSettings(loaded);
       setLoading(false);
     });
   }, []);
+
+  // Sync settings state with context themeMode
+  useEffect(() => {
+    setSettings((prev) => ({ ...prev, themeMode }));
+  }, [themeMode]);
 
   const updateSettings = useCallback(
     async (newSettings: AppSettings, shouldRegenerateWords = false) => {
@@ -59,6 +69,12 @@ export default function SettingsScreen() {
     },
     []
   );
+
+  const handleThemeChange = async (mode: ThemeMode) => {
+    await setThemeMode(mode);
+    // We don't call updateSettings here because setThemeMode handles persistence
+    // and the effect above will sync the local state
+  };
 
   const handleWordCountChange = (value: number) => {
     updateSettings({ ...settings, wordCount: Math.round(value) }, true);
@@ -122,6 +138,31 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Einstellungen</Text>
         {saving && <Text style={styles.savingText}>Speichern...</Text>}
+      </View>
+
+      {/* Design */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Design</Text>
+        <ThemeContainer>
+          <ThemeButton
+            label="Hell"
+            icon="sun-o"
+            selected={settings.themeMode === 'light'}
+            onPress={() => handleThemeChange('light')}
+          />
+          <ThemeButton
+            label="Auto"
+            icon="mobile"
+            selected={settings.themeMode === 'system'}
+            onPress={() => handleThemeChange('system')}
+          />
+          <ThemeButton
+            label="Dunkel"
+            icon="moon-o"
+            selected={settings.themeMode === 'dark'}
+            onPress={() => handleThemeChange('dark')}
+          />
+        </ThemeContainer>
       </View>
 
       {/* Anzahl der Wörter */}
@@ -266,6 +307,60 @@ function FrequencyButton({
   );
 }
 
+function ThemeContainer({ children }: { children: React.ReactNode }) {
+  const backgroundColor = useThemeColor(
+    { light: '#f0f0f0', dark: '#1c1c1e' },
+    'background'
+  );
+  return (
+    <View style={[styles.themeContainer, { backgroundColor }]}>{children}</View>
+  );
+}
+
+function ThemeButton({
+  label,
+  icon,
+  selected,
+  onPress,
+}: {
+  label: string;
+  icon: keyof typeof FontAwesome.glyphMap;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const iconColor = useThemeColor(
+    { light: selected ? '#fff' : '#666', dark: selected ? '#fff' : '#aaa' },
+    'text'
+  );
+  const textColor = useThemeColor(
+    { light: selected ? '#fff' : '#666', dark: selected ? '#fff' : '#aaa' },
+    'text'
+  );
+
+  return (
+    <TouchableOpacity
+      style={[styles.themeButton, selected && styles.themeButtonSelected]}
+      onPress={onPress}
+    >
+      <FontAwesome
+        name={icon}
+        size={24}
+        color={iconColor}
+        style={{ marginBottom: 4 }}
+      />
+      <Text
+        style={[
+          styles.themeButtonText,
+          { color: textColor },
+          selected && styles.themeButtonTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
@@ -358,6 +453,35 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   frequencyButtonTextSelected: {
+    color: '#fff',
+  },
+  themeContainer: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 4,
+    gap: 4,
+  },
+  themeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  themeButtonSelected: {
+    backgroundColor: '#007AFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  themeButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#666',
+  },
+  themeButtonTextSelected: {
     color: '#fff',
   },
   timeSection: {
