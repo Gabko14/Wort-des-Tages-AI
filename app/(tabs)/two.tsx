@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
+
 import {
-  StyleSheet,
+  ActivityIndicator,
   ScrollView,
+  StyleSheet,
   Switch,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
+
 import Slider from '@react-native-community/slider';
+import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
 
 import { Text, View } from '@/components/Themed';
 import {
@@ -140,6 +144,59 @@ export default function SettingsScreen() {
           />
         </View>
       </View>
+
+      {/* Über die App */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Über die App</Text>
+        <View style={styles.aboutRow}>
+          <Text style={styles.aboutLabel}>Version</Text>
+          <Text style={styles.aboutValue}>
+            {Constants.expoConfig?.version ?? '?'}
+          </Text>
+        </View>
+        <View style={styles.aboutRow}>
+          <Text style={styles.aboutLabel}>Update-ID</Text>
+          <Text style={styles.aboutValue}>
+            {Updates.updateId?.slice(0, 7) ?? 'dev'}
+          </Text>
+        </View>
+        <View style={styles.aboutRow}>
+          <Text style={styles.aboutLabel}>Channel</Text>
+          <Text style={styles.aboutValue}>
+            {Updates.channel ?? 'development'}
+          </Text>
+        </View>
+        <View style={styles.aboutRow}>
+          <Text style={styles.aboutLabel}>Erstellt</Text>
+          <Text style={styles.aboutValue}>
+            {Updates.createdAt
+              ? Updates.createdAt.toLocaleDateString('de-DE', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })
+              : 'N/A'}
+          </Text>
+        </View>
+        <View style={[styles.aboutRow, { borderBottomWidth: 0 }]}>
+          <Text style={styles.aboutLabel}>Nachricht</Text>
+          <Text
+            style={[styles.aboutValue, { flex: 1, textAlign: 'right' }]}
+            numberOfLines={2}
+          >
+            {(() => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const manifest = Updates.manifest as any;
+              return (
+                manifest?.extra?.expoClient?.extra?.updateMessage ??
+                manifest?.extra?.updateMessage ??
+                manifest?.message ??
+                'Keine'
+              );
+            })()}
+          </Text>
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -266,5 +323,21 @@ const styles = StyleSheet.create({
   },
   frequencyButtonTextSelected: {
     color: '#fff',
+  },
+  aboutRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(128, 128, 128, 0.3)',
+    backgroundColor: 'transparent',
+  },
+  aboutLabel: {
+    fontSize: 16,
+  },
+  aboutValue: {
+    fontSize: 16,
+    opacity: 0.6,
   },
 });

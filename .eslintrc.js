@@ -1,8 +1,8 @@
 module.exports = {
-  extends: ['expo', 'prettier'],
-  plugins: ['prettier', 'import'],
+  extends: ['expo', 'plugin:prettier/recommended'],
+  plugins: ['import'],
   rules: {
-    'prettier/prettier': 'warn',
+    'prettier/prettier': ['warn', { endOfLine: 'auto' }],
 
     // Import-Sortierung
     'import/order': [

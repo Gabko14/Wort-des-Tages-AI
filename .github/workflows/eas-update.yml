@@ -64,6 +64,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Update app.json version from tag
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "Setting version to $VERSION"
+          jq --arg version "$VERSION" '.expo.version = $version' app.json > app.json.tmp
+          mv app.json.tmp app.json
+          cat app.json | grep version
+
       - name: Build APK
         run: eas build --platform android --profile preview --non-interactive --json > build-result.json
 
