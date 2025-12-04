@@ -1,5 +1,7 @@
-import { renderHook } from '@testing-library/react-native';
 import { AppState } from 'react-native';
+
+import { renderHook } from '@testing-library/react-native';
+
 import { useDailyRefresh } from '../useDailyRefresh';
 
 jest.mock('react-native', () => ({

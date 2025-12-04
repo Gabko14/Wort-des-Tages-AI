@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+
 import { AppState, AppStateStatus } from 'react-native';
 
 function getTodayDateString(): string {

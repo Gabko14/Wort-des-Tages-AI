@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
+
 import {
-  StyleSheet,
-  ScrollView,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
+  StyleSheet,
 } from 'react-native';
 
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { useDailyRefresh } from '@/hooks/useDailyRefresh';
-import { Wort } from '@/services/database';
-import { initDatabase } from '@/services/database';
+import { initDatabase, Wort } from '@/services/database';
 import { getOrGenerateTodaysWords } from '@/services/wordService';
 
 export default function HomeScreen() {

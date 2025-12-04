@@ -1,5 +1,7 @@
-import { Wort } from '@/services/database';
 import { Linking, Pressable, StyleSheet } from 'react-native';
+
+import { Wort } from '@/services/database';
+
 import { Text, View, useThemeColor } from './Themed';
 
 interface WordCardProps {
