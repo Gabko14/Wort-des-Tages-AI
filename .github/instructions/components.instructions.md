@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
 
 ### Exports
 
-- Use **named exports** for reusable components
-- Use **default exports** only for screen components in `/app`
+- Use **named exports** for most reusable components
+- Use **default exports** only for screen components in `/app` (Expo Router requirement)
 
 ### Props
 

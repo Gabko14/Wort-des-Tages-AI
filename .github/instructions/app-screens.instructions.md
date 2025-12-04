@@ -64,8 +64,9 @@ const styles = StyleSheet.create({
 
 ```typescript
 import { Stack } from 'expo-router';
+import type { ReactNode } from 'react';
 
-export default function Layout() {
+export default function Layout(): ReactNode {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ title: 'Home' }} />
