@@ -20,6 +20,7 @@ import {
   loadSettings,
   saveSettings,
 } from '@/services/settingsService';
+import { getUpdateMessage } from '@/services/updateService';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
@@ -184,16 +185,7 @@ export default function SettingsScreen() {
             style={[styles.aboutValue, { flex: 1, textAlign: 'right' }]}
             numberOfLines={2}
           >
-            {(() => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const manifest = Updates.manifest as any;
-              return (
-                manifest?.extra?.expoClient?.extra?.updateMessage ??
-                manifest?.extra?.updateMessage ??
-                manifest?.message ??
-                'Keine'
-              );
-            })()}
+            {getUpdateMessage()}
           </Text>
         </View>
       </View>
