@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { Alert, Text, TouchableOpacity } from 'react-native';
 
@@ -17,23 +17,22 @@ function TabBarIcon(props: {
   return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
 }
 
-function showUpdateDetails() {
-  const info = getUpdateInfo();
-  Alert.alert(
-    'App-Info',
-    `Version: ${info.version}\n` +
-      `Update-ID: ${info.fullUpdateId}\n` +
-      `Channel: ${info.channel}\n` +
-      `Erstellt: ${info.createdAt}\n` +
-      `Nachricht: ${info.message}`,
-    [{ text: 'OK' }]
-  );
-}
-
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const textColor = Colors[colorScheme ?? 'light'].text;
-  const info = getUpdateInfo();
+  const info = useMemo(() => getUpdateInfo(), []);
+
+  const showUpdateDetails = useCallback(() => {
+    Alert.alert(
+      'App-Info',
+      `Version: ${info.version}\n` +
+        `Update-ID: ${info.fullUpdateId}\n` +
+        `Channel: ${info.channel}\n` +
+        `Erstellt: ${info.createdAt}\n` +
+        `Nachricht: ${info.message}`,
+      [{ text: 'OK' }]
+    );
+  }, [info]);
 
   return (
     <Tabs
