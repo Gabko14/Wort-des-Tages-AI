@@ -91,3 +91,20 @@ npm test              # Run all tests
 npm test -- --watch   # Watch mode
 npm test -- --coverage # With coverage
 ```
+
+## Best Practices
+
+### DO
+
+- Use descriptive test names that explain the expected behavior
+- Follow the Arrange-Act-Assert pattern
+- Test edge cases (empty arrays, null values, errors)
+- Mock external dependencies (database, AsyncStorage, API calls)
+- Test both success and error paths
+
+### DO NOT
+
+- Test implementation details (internal function calls)
+- Test React Native internals
+- Write tests that depend on each other
+- Skip error handling tests

@@ -66,3 +66,19 @@ const styles = StyleSheet.create({
 - Test rendering with different props
 - Test loading and error states
 - Test user interactions where applicable
+
+## Boundaries
+
+### DO
+
+- Use functional components with TypeScript
+- Handle all UI states (loading, error, empty, data)
+- Use `useCallback` for handlers passed to children
+- Use `useMemo` for expensive computations
+
+### DO NOT
+
+- Use class components
+- Use inline styles (use StyleSheet.create)
+- Use `any` type for props
+- Skip loading/error state handling

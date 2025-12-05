@@ -49,3 +49,19 @@ export async function serviceFunctionName(): Promise<ReturnType> {
 - Add tests in `services/__tests__/` for new service functions
 - Mock database and AsyncStorage operations
 - Test both success and error cases
+
+## Boundaries
+
+### DO
+
+- Return typed Promises for all async functions
+- Use parameterized queries to prevent SQL injection
+- Handle null/undefined cases gracefully
+- Log errors with context before re-throwing
+
+### DO NOT
+
+- Create new database connections (use `getDatabase()`)
+- Export helper functions (keep them private)
+- Modify the database schema
+- Store sensitive data in plain text

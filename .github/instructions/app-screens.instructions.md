@@ -74,3 +74,18 @@ export default function Layout(): ReactNode {
   );
 }
 ```
+
+## Boundaries
+
+### DO
+
+- Handle all UI states (loading, error, empty, data)
+- Use German strings for user-facing text
+- Use custom hooks for data fetching logic
+- Clean up subscriptions and listeners
+
+### DO NOT
+
+- Use named exports for screens (Expo Router requires default)
+- Skip error handling for data loading
+- Create deeply nested component trees in screens
