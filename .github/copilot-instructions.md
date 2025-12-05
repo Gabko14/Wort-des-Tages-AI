@@ -6,6 +6,45 @@ German "Word of the Day" mobile app built with **Expo Router** (React Native). D
 
 ---
 
+## Agent Task Guidelines
+
+### Suitable Tasks
+
+- Bug fixes with clear reproduction steps
+- Adding new UI components following existing patterns
+- Implementing new service functions with database queries
+- Writing tests for existing functionality
+- Documentation updates
+- Refactoring code to follow project conventions
+
+### Pre-Flight Checks
+
+Before making changes, always:
+
+1. Run `npm run lint` to check for existing linting issues
+2. Run `npm run type-check` to validate TypeScript
+3. Run `npm test` to ensure existing tests pass
+
+### After Making Changes
+
+1. Run `npm run lint:fix` to auto-fix formatting
+2. Run `npm run type-check` to ensure no type errors
+3. Run `npm test` to ensure no regressions
+4. For UI changes, verify in the Expo development server if possible
+
+### Acceptance Criteria
+
+All changes must:
+
+- Pass TypeScript strict mode (`npm run type-check`)
+- Pass ESLint checks (`npm run lint`)
+- Include tests for new functionality in services/hooks
+- Follow existing naming conventions and code style
+- Not introduce `any` types
+- Use `@/` path alias for imports
+
+---
+
 ## Architecture
 
 ### Data Flow
