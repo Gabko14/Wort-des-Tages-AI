@@ -16,7 +16,9 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
     "@expo/vector-icons": "^15.0.3",
+    "expo-application": "~6.0.1",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/slider": "^5.1.1",
     "@react-navigation/native": "^7.1.8",

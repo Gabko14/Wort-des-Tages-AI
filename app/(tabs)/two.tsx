@@ -18,6 +18,7 @@ import {
   cancelAllNotifications,
   scheduleDailyNotification,
 } from '@/services/notificationService';
+import { grantPremium } from '@/services/premiumService';
 import {
   AppSettings,
   DEFAULT_SETTINGS,
@@ -41,6 +42,7 @@ export default function SettingsScreen() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [devGranting, setDevGranting] = useState(false);
 
   useEffect(() => {
     loadSettings().then((loaded) => {
@@ -100,6 +102,18 @@ export default function SettingsScreen() {
     if (settings.notificationsEnabled) {
       await scheduleDailyNotification(time);
     }
+  };
+
+  const handleDevPremium = async () => {
+    setDevGranting(true);
+    const success = await grantPremium('dev');
+    setDevGranting(false);
+    Alert.alert(
+      success ? 'Premium aktiviert' : 'Fehler',
+      success
+        ? 'Dev-Premium wurde aktiviert.'
+        : 'Premium konnte nicht aktiviert werden.'
+    );
   };
 
   if (loading) {
@@ -228,6 +242,19 @@ export default function SettingsScreen() {
             </View>
           </View>
         )}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Premium (Dev)</Text>
+        <TouchableOpacity
+          style={styles.devButton}
+          onPress={handleDevPremium}
+          disabled={devGranting}
+        >
+          <Text style={styles.devButtonText}>
+            {devGranting ? 'Aktiviere...' : 'Premium aktivieren (Dev)'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Über die App */}
@@ -448,5 +475,17 @@ const styles = StyleSheet.create({
   aboutValue: {
     fontSize: 16,
     opacity: 0.6,
+  },
+  devButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+  },
+  devButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
