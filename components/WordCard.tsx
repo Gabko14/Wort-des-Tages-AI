@@ -1,8 +1,11 @@
+import { useState } from 'react';
+
 import { Linking, Pressable, StyleSheet } from 'react-native';
 
 import { Wort } from '@/services/database';
 import { EnrichedWord } from '@/types/ai';
 
+import { QuizCard } from './QuizCard';
 import { Text, View, useThemeColor } from './Themed';
 
 interface WordCardProps {
@@ -12,6 +15,7 @@ interface WordCardProps {
 }
 
 export function WordCard({ word, enriched, aiLoading }: WordCardProps) {
+  const [showQuiz, setShowQuiz] = useState(false);
   const cardBackground = useThemeColor(
     { light: '#f8f9fa', dark: '#1a1a1a' },
     'background'
@@ -74,6 +78,21 @@ export function WordCard({ word, enriched, aiLoading }: WordCardProps) {
       {aiLoading && !enriched && (
         <Text style={styles.sectionText}>KI lädt...</Text>
       )}
+      {enriched?.quiz && (
+        <View style={styles.section}>
+          <Pressable
+            style={[styles.quizButton, { backgroundColor: accentColor }]}
+            onPress={() => setShowQuiz((v) => !v)}
+          >
+            <Text style={styles.quizButtonText}>
+              {showQuiz ? 'Quiz ausblenden' : 'Üben'}
+            </Text>
+          </Pressable>
+          {showQuiz && (
+            <QuizCard quiz={enriched.quiz} accentColor={accentColor} />
+          )}
+        </View>
+      )}
       <Pressable onPress={handleOpenUrl} style={styles.linkButton}>
         <Text style={[styles.linkText, { color: accentColor }]}>
           Im DWDS nachschlagen →
@@ -112,6 +131,17 @@ const styles = StyleSheet.create({
   sectionText: {
     fontSize: 14,
     opacity: 0.9,
+  },
+  quizButton: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  quizButtonText: {
+    color: '#fff',
+    fontWeight: '700',
   },
   tagContainer: {
     flexDirection: 'row',

@@ -33,6 +33,11 @@ type EnrichedWord = {
   wordId: number;
   definition: string;
   exampleSentence: string;
+  quiz?: {
+    question: string;
+    options: { id: string; text: string }[];
+    correctOptionId: string;
+  };
 };
 
 async function isPremium(deviceId: string): Promise<boolean> {
@@ -58,11 +63,21 @@ Liefere ein JSON-Objekt mit dem Schema:
     {
       "wordId": number,
       "definition": "kurze, einfache Erklaerung auf Deutsch",
-      "exampleSentence": "Beispielsatz auf Deutsch, der das Wort zeigt"
+      "exampleSentence": "Beispielsatz auf Deutsch, der das Wort zeigt",
+      "quiz": {
+        "question": "Multiple-Choice-Frage zum Wort",
+        "options": [
+          { "id": "a", "text": "Antwort A" },
+          { "id": "b", "text": "Antwort B" },
+          { "id": "c", "text": "Antwort C" },
+          { "id": "d", "text": "Antwort D" }
+        ],
+        "correctOptionId": "b"
+      }
     }
   ]
 }
-Erklaerungen sollen knapp, praezise und alltagsnah sein. Keine weiteren Felder.`;
+Erklaerungen sollen knapp, praezise und alltagsnah sein. Optionen klar unterscheidbar. Keine weiteren Felder.`;
 
   const userPrompt = JSON.stringify({
     words: words.map((w) => ({
