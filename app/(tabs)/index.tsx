@@ -10,24 +10,45 @@ import {
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { useDailyRefresh } from '@/hooks/useDailyRefresh';
+import { enrichWords } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
 import { getOrGenerateTodaysWords } from '@/services/wordService';
+import { EnrichedWord } from '@/types/ai';
 
 export default function HomeScreen() {
   const [words, setWords] = useState<Wort[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>(
+    {}
+  );
 
   const loadWords = useCallback(async () => {
     try {
       setError(null);
+      setAiLoading(true);
       await initDatabase();
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);
+      enrichWords(todaysWords)
+        .then((result) => {
+          if (!result) {
+            setEnrichedMap({});
+            return;
+          }
+          const next: Record<number, EnrichedWord> = {};
+          result.forEach((item) => {
+            next[item.wordId] = item;
+          });
+          setEnrichedMap(next);
+        })
+        .finally(() => setAiLoading(false));
     } catch (err) {
       console.error('Error loading words:', err);
       setError('Fehler beim Laden der Wörter');
+      setAiLoading(false);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -89,7 +110,12 @@ export default function HomeScreen() {
       ) : (
         <View style={styles.wordsList}>
           {words.map((word) => (
-            <WordCard key={word.id} word={word} />
+            <WordCard
+              key={word.id}
+              word={word}
+              enriched={enrichedMap[word.id]}
+              aiLoading={aiLoading}
+            />
           ))}
         </View>
       )}

@@ -1,14 +1,17 @@
 import { Linking, Pressable, StyleSheet } from 'react-native';
 
 import { Wort } from '@/services/database';
+import { EnrichedWord } from '@/types/ai';
 
 import { Text, View, useThemeColor } from './Themed';
 
 interface WordCardProps {
   word: Wort;
+  enriched?: EnrichedWord;
+  aiLoading?: boolean;
 }
 
-export function WordCard({ word }: WordCardProps) {
+export function WordCard({ word, enriched, aiLoading }: WordCardProps) {
   const cardBackground = useThemeColor(
     { light: '#f8f9fa', dark: '#1a1a1a' },
     'background'
@@ -56,6 +59,21 @@ export function WordCard({ word }: WordCardProps) {
           </View>
         )}
       </View>
+      {enriched?.definition && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Definition</Text>
+          <Text style={styles.sectionText}>{enriched.definition}</Text>
+        </View>
+      )}
+      {enriched?.exampleSentence && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Beispielsatz</Text>
+          <Text style={styles.sectionText}>{enriched.exampleSentence}</Text>
+        </View>
+      )}
+      {aiLoading && !enriched && (
+        <Text style={styles.sectionText}>KI lädt...</Text>
+      )}
       <Pressable onPress={handleOpenUrl} style={styles.linkButton}>
         <Text style={[styles.linkText, { color: accentColor }]}>
           Im DWDS nachschlagen →
@@ -81,6 +99,19 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 12,
+  },
+  section: {
+    marginBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  sectionText: {
+    fontSize: 14,
+    opacity: 0.9,
   },
   tagContainer: {
     flexDirection: 'row',
