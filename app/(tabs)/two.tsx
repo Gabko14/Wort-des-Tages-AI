@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Switch,
@@ -14,6 +15,10 @@ import * as Updates from 'expo-updates';
 
 import { Text, View } from '@/components/Themed';
 import {
+  cancelAllNotifications,
+  scheduleDailyNotification,
+} from '@/services/notificationService';
+import {
   AppSettings,
   DEFAULT_SETTINGS,
   FrequencyRange,
@@ -21,6 +26,16 @@ import {
   saveSettings,
 } from '@/services/settingsService';
 import { getUpdateMessage } from '@/services/updateService';
+
+const TIME_OPTIONS = [
+  '07:00',
+  '08:00',
+  '09:00',
+  '10:00',
+  '12:00',
+  '18:00',
+  '20:00',
+];
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
@@ -57,6 +72,34 @@ export default function SettingsScreen() {
 
   const handleFrequencyChange = (range: FrequencyRange) => {
     updateSettings({ ...settings, frequencyRange: range });
+  };
+
+  const handleNotificationToggle = async (enabled: boolean) => {
+    if (enabled) {
+      const identifier = await scheduleDailyNotification(
+        settings.notificationTime
+      );
+      if (identifier) {
+        updateSettings({ ...settings, notificationsEnabled: true });
+      } else {
+        Alert.alert(
+          'Berechtigung erforderlich',
+          'Bitte erlaube Benachrichtigungen in den Geräteeinstellungen.'
+        );
+      }
+    } else {
+      await cancelAllNotifications();
+      updateSettings({ ...settings, notificationsEnabled: false });
+    }
+  };
+
+  const handleTimeChange = async (time: string) => {
+    const newSettings = { ...settings, notificationTime: time };
+    await updateSettings(newSettings);
+
+    if (settings.notificationsEnabled) {
+      await scheduleDailyNotification(time);
+    }
   };
 
   if (loading) {
@@ -144,6 +187,47 @@ export default function SettingsScreen() {
             onPress={() => handleFrequencyChange('haeufig')}
           />
         </View>
+      </View>
+
+      {/* Benachrichtigungen */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Tägliche Erinnerung</Text>
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleLabel}>Benachrichtigung aktivieren</Text>
+          <Switch
+            value={settings.notificationsEnabled}
+            onValueChange={handleNotificationToggle}
+          />
+        </View>
+
+        {settings.notificationsEnabled && (
+          <View style={styles.timeSection}>
+            <Text style={styles.timeSectionLabel}>Uhrzeit</Text>
+            <View style={styles.timeButtons}>
+              {TIME_OPTIONS.map((time) => (
+                <TouchableOpacity
+                  key={time}
+                  style={[
+                    styles.timeButton,
+                    settings.notificationTime === time &&
+                      styles.timeButtonSelected,
+                  ]}
+                  onPress={() => handleTimeChange(time)}
+                >
+                  <Text
+                    style={[
+                      styles.timeButtonText,
+                      settings.notificationTime === time &&
+                        styles.timeButtonTextSelected,
+                    ]}
+                  >
+                    {time}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Über die App */}
@@ -314,6 +398,39 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   frequencyButtonTextSelected: {
+    color: '#fff',
+  },
+  timeSection: {
+    marginTop: 16,
+    backgroundColor: 'transparent',
+  },
+  timeSectionLabel: {
+    fontSize: 14,
+    opacity: 0.6,
+    marginBottom: 8,
+  },
+  timeButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    backgroundColor: 'transparent',
+  },
+  timeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(128, 128, 128, 0.3)',
+    backgroundColor: 'transparent',
+  },
+  timeButtonSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  timeButtonText: {
+    fontSize: 14,
+  },
+  timeButtonTextSelected: {
     color: '#fff',
   },
   aboutRow: {
