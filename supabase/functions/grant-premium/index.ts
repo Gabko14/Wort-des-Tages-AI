@@ -1,5 +1,24 @@
 // @ts-nocheck
 /* eslint-disable import/no-unresolved */
+/**
+ * TODO (Play Store Release) #60: Secure this endpoint before production!
+ *
+ * Current state: Anyone can call this endpoint to grant themselves premium.
+ * This is intentional for development/testing but MUST be secured before release.
+ *
+ * Options:
+ * 1. For source='dev': Require an admin secret header (e.g., X-Admin-Secret)
+ *    that is only known to developers. Check: req.headers.get('X-Admin-Secret') === Deno.env.get('ADMIN_SECRET')
+ *
+ * 2. For source='google_play': Validate the purchaseToken with Google Play Developer API
+ *    - Use googleapis package to verify the purchase receipt
+ *    - See: https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptions/get
+ *
+ * 3. For source='apple': Validate with Apple's App Store Server API
+ *    - See: https://developer.apple.com/documentation/appstoreserverapi
+ *
+ * 4. Consider disabling source='dev' entirely in production builds
+ */
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 

@@ -244,6 +244,13 @@ export default function SettingsScreen() {
         )}
       </View>
 
+      {/* TODO (Play Store Release) #60: Hide this section in production builds
+          Replace with: {__DEV__ && ( <View>...</View> )}
+
+          Also consider adding a "Revoke Premium" button for testing:
+          - Add revokePremium() to premiumService.ts that clears the entitlement
+          - Useful for verifying PaywallTeaser works correctly
+      */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Premium (Dev)</Text>
         <TouchableOpacity
