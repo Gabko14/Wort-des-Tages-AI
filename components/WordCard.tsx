@@ -9,9 +9,15 @@ interface WordCardProps {
   word: Wort;
   enriched?: EnrichedWord;
   aiLoading?: boolean;
+  aiError?: boolean;
 }
 
-export function WordCard({ word, enriched, aiLoading }: WordCardProps) {
+export function WordCard({
+  word,
+  enriched,
+  aiLoading,
+  aiError,
+}: WordCardProps) {
   const cardBackground = useThemeColor(
     { light: '#f8f9fa', dark: '#1a1a1a' },
     'background'
@@ -74,6 +80,9 @@ export function WordCard({ word, enriched, aiLoading }: WordCardProps) {
       {aiLoading && !enriched && (
         <Text style={styles.sectionText}>KI lädt...</Text>
       )}
+      {aiError && !enriched && !aiLoading && (
+        <Text style={styles.errorText}>KI nicht verfügbar</Text>
+      )}
       <Pressable onPress={handleOpenUrl} style={styles.linkButton}>
         <Text style={[styles.linkText, { color: accentColor }]}>
           Im DWDS nachschlagen →
@@ -112,6 +121,11 @@ const styles = StyleSheet.create({
   sectionText: {
     fontSize: 14,
     opacity: 0.9,
+  },
+  errorText: {
+    fontSize: 14,
+    opacity: 0.7,
+    fontStyle: 'italic',
   },
   tagContainer: {
     flexDirection: 'row',

@@ -12,6 +12,7 @@ import { WordCard } from '@/components/WordCard';
 import { useDailyRefresh } from '@/hooks/useDailyRefresh';
 import { enrichWords } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
+import { checkPremiumStatus } from '@/services/premiumService';
 import { getOrGenerateTodaysWords } from '@/services/wordService';
 import { EnrichedWord } from '@/types/ai';
 
@@ -21,6 +22,8 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>(
     {}
   );
@@ -28,27 +31,34 @@ export default function HomeScreen() {
   const loadWords = useCallback(async () => {
     try {
       setError(null);
-      setAiLoading(true);
       await initDatabase();
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);
-      enrichWords(todaysWords)
-        .then((result) => {
-          if (!result) {
-            setEnrichedMap({});
-            return;
-          }
-          const next: Record<number, EnrichedWord> = {};
-          result.forEach((item) => {
-            next[item.wordId] = item;
-          });
-          setEnrichedMap(next);
-        })
-        .finally(() => setAiLoading(false));
+
+      const premiumStatus = await checkPremiumStatus();
+      setIsPremium(premiumStatus.isPremium);
+
+      if (premiumStatus.isPremium) {
+        setAiLoading(true);
+        setAiError(false);
+        enrichWords(todaysWords)
+          .then((result) => {
+            if (!result) {
+              setAiError(true);
+              setEnrichedMap({});
+              return;
+            }
+            const next: Record<number, EnrichedWord> = {};
+            result.forEach((item) => {
+              next[item.wordId] = item;
+            });
+            setEnrichedMap(next);
+          })
+          .finally(() => setAiLoading(false));
+      }
     } catch (err) {
       console.error('Error loading words:', err);
       setError('Fehler beim Laden der Wörter');
-      setAiLoading(false);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -114,7 +124,8 @@ export default function HomeScreen() {
               key={word.id}
               word={word}
               enriched={enrichedMap[word.id]}
-              aiLoading={aiLoading}
+              aiLoading={isPremium && aiLoading}
+              aiError={isPremium && aiError}
             />
           ))}
         </View>
