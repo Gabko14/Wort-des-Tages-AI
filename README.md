@@ -33,18 +33,9 @@ npm install
 npm start
 ```
 
-## 📦 Deployment
+## 👨‍💻 Code-Richtlinien
 
-Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für:
-
-- Versionierung (SemVer)
-- CI/CD Pipelines
-- Artefakt-Verwaltung
-- Release-Checkliste
-
-## 📚 Dokumentation
-
-### Code-Richtlinien & Standards
+### Standards
 
 > ✅ = Automatisch geprüft (ESLint/Prettier/TypeScript)
 
@@ -127,3 +118,24 @@ Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für:
 - `try/catch` für async Operationen
 - `console.error()` für Fehler-Logging
 - Error & Loading States in Komponenten
+
+## 📦 Deployment
+
+Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für:
+
+- Versionierung (SemVer)
+- CI/CD Pipelines
+- Artefakt-Verwaltung
+- Release-Checkliste
+
+## 📖 Realisierungskonzept
+
+Siehe [REALISIERUNGSKONZEPT.md](REALISIERUNGSKONZEPT.md) für:
+
+- Ziele und Anforderungen
+- Architektur und Komponenten
+- Technologiestack
+- Datenmodell (ERD, DSGVO)
+- Sicherheit und Verschlüsselung
+- Projektorganisation und Meilensteine
+- Risiken und Wartungsplan
