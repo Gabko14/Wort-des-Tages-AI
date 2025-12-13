@@ -10,6 +10,21 @@ Eine mobile App für das tägliche Wort des Tages.
 
 ## 🚀 Development
 
+### Pull environment variables
+
+```bash
+# if you don't have eas-cli installed
+npm install -g eas-cli
+```
+
+```bash
+# request access to our expo org and then run
+eas login
+eas env:pull
+```
+
+### Running app in dev mode
+
 ```bash
 # Install dependencies
 npm install
@@ -18,23 +33,14 @@ npm install
 npm start
 ```
 
-## 📦 CI/CD
+## 📦 Deployment
 
-| Trigger        | Action                                     |
-| -------------- | ------------------------------------------ |
-| Push to `main` | OTA Update (automatisch auf allen Geräten) |
-| Tag `v*.*.*`   | Neuer APK Build                            |
+Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für:
 
-### OTA Updates
-
-Nach jedem Push auf `main` wird ein Over-the-Air Update veröffentlicht. Die App aktualisiert sich automatisch beim nächsten Start.
-
-### Neuer APK Build
-
-```bash
-git tag v1.0.1
-git push --tags
-```
+- Versionierung (SemVer)
+- CI/CD Pipelines
+- Artefakt-Verwaltung
+- Release-Checkliste
 
 ## 📚 Dokumentation
 
