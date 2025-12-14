@@ -27,10 +27,11 @@ describe('ErrorState', () => {
   });
 
   it('should render error icon', () => {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { UNSAFE_getAllByType } = render(<ErrorState message="Test error" onRetry={jest.fn()} />);
 
     // Check that Ionicons are rendered (error icon + button icon)
-    const icons = UNSAFE_getAllByType(require('@expo/vector-icons').Ionicons);
+    const icons = UNSAFE_getAllByType(Ionicons);
     expect(icons.length).toBeGreaterThanOrEqual(1);
   });
 });

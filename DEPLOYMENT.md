@@ -10,10 +10,15 @@ Wir nutzen **Semantic Versioning**: `MAJOR.MINOR.PATCH`
 | **MINOR** | Neues Feature           | `1.1.0` - Premium hinzu   |
 | **PATCH** | Bugfix                  | `1.0.1` - Crash behoben   |
 
-**Wo steht die Version?**
+**Version aktualisieren:**
 
-- `package.json` → `"version": "1.0.0"`
-- `app.json` → `"expo": { "version": "1.0.0" }`
+```bash
+npm version patch   # Bugfix: 1.0.0 → 1.0.1
+npm version minor   # Feature: 1.0.0 → 1.1.0
+npm version major   # Breaking: 1.0.0 → 2.0.0
+```
+
+Dieser Befehl updated `package.json` und `app.json`, erstellt Commit + Tag, und pushed zu GitHub.
 
 ---
 
@@ -143,15 +148,11 @@ Alle Abhängigkeiten sind in `package.json` definiert und durch `package-lock.js
 ## 6. Checkliste: Neues Release
 
 ```bash
-# 1. Sicherstellen dass CI grün ist (alle Tests bestanden)
+# 1. Alle Änderungen committed, auf main branch
+git checkout main && git pull
 
-# 2. Tag erstellen (z.B. v1.0.1)
-git tag v1.0.1
+# 2. Release erstellen
+npm version patch   # oder minor/major
 
-# 3. Tag pushen → startet automatisch den Build
-git push --tags
-
-# 4. Warten (~10-15 Min) und auf GitHub Releases prüfen
+# 3. Warten (~10-15 Min) und GitHub Releases prüfen
 ```
-
-Die Version in `app.json` wird automatisch aus dem Tag-Namen gesetzt.

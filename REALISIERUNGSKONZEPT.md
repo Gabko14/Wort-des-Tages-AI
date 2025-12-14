@@ -177,10 +177,9 @@ npm start          # Expo Dev Server starten
 
 Der Build-Prozess ist vollständig automatisiert:
 
-1. **Tag erstellen**: `git tag v1.0.0`
-2. **Tag pushen**: `git push --tags`
-3. **GitHub Actions** triggert EAS Build
-4. **APK** wird automatisch auf GitHub Releases hochgeladen
+```bash
+npm version patch   # oder minor/major
+```
 
 Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für Details.
 
