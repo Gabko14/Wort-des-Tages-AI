@@ -139,3 +139,13 @@ Siehe [REALISIERUNGSKONZEPT.md](REALISIERUNGSKONZEPT.md) für:
 - Sicherheit und Verschlüsselung
 - Projektorganisation und Meilensteine
 - Risiken und Wartungsplan
+
+## 🧪 Testkonzept
+
+Siehe [TESTKONZEPT.md](TESTKONZEPT.md) für:
+
+- Kritikalität der Funktionseinheiten
+- Testfälle und Testdaten
+- Testumgebung und Testinfrastruktur
+- Testarten und Testverfahren
+- Testzeitpunkte im CI/CD Prozess
