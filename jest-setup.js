@@ -1,3 +1,17 @@
+// Suppress act() warnings from @expo/vector-icons (library internal async font loading)
+const originalError = console.error;
+console.error = (...args) => {
+  const message = args[0];
+  if (
+    typeof message === 'string' &&
+    (message.includes('An update to Icon inside a test was not wrapped in act') ||
+      message.includes('wrap-tests-with-act'))
+  ) {
+    return;
+  }
+  originalError.call(console, ...args);
+};
+
 // Mock the useColorScheme hook to avoid async issues in tests
 jest.mock('@/components/useColorScheme', () => ({
   useColorScheme: jest.fn(() => 'light'),
