@@ -2,10 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/config/supabase';
 import { Wort } from '@/services/database';
+import { getDeviceId } from '@/services/deviceService';
 import { AiEnrichResponse, EnrichedWord } from '@/types/ai';
 import { AppError } from '@/utils/appError';
-
-import { getDeviceId } from './deviceService';
 
 const CACHE_PREFIX = 'enriched_words';
 

@@ -1,10 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/config/supabase';
+import { getDeviceId } from '@/services/deviceService';
 import { PremiumStatus } from '@/types/premium';
 import { AppError } from '@/utils/appError';
-
-import { getDeviceId } from './deviceService';
 
 const CACHE_KEY = 'premium_status_cache';
 let cachedStatus: PremiumStatus | null = null;
@@ -15,25 +14,6 @@ async function persistStatus(status: PremiumStatus) {
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(status));
   } catch (err) {
     console.error('Failed to persist premium status:', err);
-  }
-}
-
-async function loadCachedStatus(): Promise<PremiumStatus | null> {
-  if (cachedStatus) return cachedStatus;
-  let stored: string | null = null;
-  try {
-    stored = await AsyncStorage.getItem(CACHE_KEY);
-  } catch (err) {
-    console.error('Failed to read cached premium status:', err);
-    return null;
-  }
-  if (!stored) return null;
-  try {
-    const parsed = JSON.parse(stored) as PremiumStatus;
-    cachedStatus = parsed;
-    return parsed;
-  } catch {
-    return null;
   }
 }
 
@@ -62,9 +42,10 @@ export async function checkPremiumStatus(): Promise<PremiumStatus> {
     );
   }
 
+  const responseData = data as { isPremium?: boolean; source?: string } | null;
   const status: PremiumStatus = {
-    isPremium: (data as any)?.isPremium ?? false,
-    source: (data as any)?.source ?? undefined,
+    isPremium: responseData?.isPremium ?? false,
+    source: responseData?.source,
   };
 
   await persistStatus(status);

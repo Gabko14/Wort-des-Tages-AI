@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { ActivityIndicator, Alert, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+
+import Toast from 'react-native-toast-message';
 
 import { Button } from '@/components/Button';
 import { CollapsibleSection } from '@/components/CollapsibleSection';
@@ -39,9 +41,12 @@ export default function SettingsScreen() {
       .then((loaded) => {
         setSettings(loaded);
       })
-      .catch((err) => {
-        console.error('Failed to load settings:', err);
-        Alert.alert('Fehler', 'Einstellungen konnten nicht geladen werden.');
+      .catch(() => {
+        Toast.show({
+          type: 'error',
+          text1: 'Fehler beim Laden',
+          text2: 'Einstellungen konnten nicht geladen werden',
+        });
       })
       .finally(() => {
         setLoading(false);
@@ -53,9 +58,12 @@ export default function SettingsScreen() {
     setSaving(true);
     try {
       await saveSettings(newSettings);
-    } catch (err) {
-      console.error('Failed to save settings:', err);
-      Alert.alert('Fehler', 'Einstellungen konnten nicht gespeichert werden.');
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: 'Fehler beim Speichern',
+        text2: 'Einstellungen konnten nicht gespeichert werden',
+      });
     } finally {
       setSaving(false);
     }
@@ -85,23 +93,39 @@ export default function SettingsScreen() {
         const identifier = await scheduleDailyNotification(settings.notificationTime);
         if (identifier) {
           void updateSettings({ ...settings, notificationsEnabled: true });
+          Toast.show({
+            type: 'success',
+            text1: 'Benachrichtigungen aktiviert',
+            text2: 'Du erhältst täglich eine Erinnerung',
+          });
         } else {
-          Alert.alert(
-            'Berechtigung erforderlich',
-            'Bitte erlaube Benachrichtigungen in den Geräteeinstellungen.'
-          );
+          Toast.show({
+            type: 'error',
+            text1: 'Berechtigung erforderlich',
+            text2: 'Bitte erlaube Benachrichtigungen in den Einstellungen',
+          });
         }
-      } catch (err) {
-        console.error('Failed to enable notifications:', err);
-        Alert.alert('Fehler', 'Benachrichtigungen konnten nicht aktiviert werden.');
+      } catch {
+        Toast.show({
+          type: 'error',
+          text1: 'Fehler',
+          text2: 'Benachrichtigungen konnten nicht aktiviert werden',
+        });
       }
     } else {
       try {
         await cancelAllNotifications();
         void updateSettings({ ...settings, notificationsEnabled: false });
-      } catch (err) {
-        console.error('Failed to disable notifications:', err);
-        Alert.alert('Fehler', 'Benachrichtigungen konnten nicht deaktiviert werden.');
+        Toast.show({
+          type: 'success',
+          text1: 'Benachrichtigungen deaktiviert',
+        });
+      } catch {
+        Toast.show({
+          type: 'error',
+          text1: 'Fehler',
+          text2: 'Benachrichtigungen konnten nicht deaktiviert werden',
+        });
       }
     }
   };
@@ -113,56 +137,82 @@ export default function SettingsScreen() {
     if (settings.notificationsEnabled) {
       try {
         await scheduleDailyNotification(time);
-      } catch (err) {
-        console.error('Failed to reschedule notification:', err);
-        Alert.alert('Fehler', 'Benachrichtigung konnte nicht aktualisiert werden.');
+        Toast.show({
+          type: 'success',
+          text1: 'Zeit geändert',
+          text2: `Benachrichtigung um ${time} Uhr`,
+        });
+      } catch {
+        Toast.show({
+          type: 'error',
+          text1: 'Fehler',
+          text2: 'Zeit konnte nicht geändert werden',
+        });
       }
     }
   };
 
   const handleDevPremium = async () => {
     setDevGranting(true);
-    let success = false;
     try {
-      success = await grantPremium('dev');
-    } catch (err) {
-      console.error('Failed to grant premium:', err);
+      await grantPremium('dev');
+      Toast.show({
+        type: 'success',
+        text1: 'Premium aktiviert',
+        text2: 'Dev-Premium wurde erfolgreich aktiviert',
+      });
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: 'Fehler',
+        text2: 'Premium konnte nicht aktiviert werden',
+      });
     }
     setDevGranting(false);
-    Alert.alert(
-      success ? 'Premium aktiviert' : 'Fehler',
-      success ? 'Dev-Premium wurde aktiviert.' : 'Premium konnte nicht aktiviert werden.'
-    );
   };
 
   const handleTestNotification = async () => {
     setTestingNotification(true);
-    let success = false;
     try {
-      success = await sendTestNotification();
-    } catch (err) {
-      console.error('Failed to send test notification:', err);
+      const success = await sendTestNotification();
+      if (success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Test gesendet',
+          text2: 'Benachrichtigung wurde erfolgreich gesendet',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Berechtigung erforderlich',
+          text2: 'Bitte erlaube Benachrichtigungen in den Einstellungen',
+        });
+      }
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: 'Fehler',
+        text2: 'Test-Benachrichtigung fehlgeschlagen',
+      });
     }
     setTestingNotification(false);
-    if (!success) {
-      Alert.alert(
-        'Berechtigung erforderlich',
-        'Bitte erlaube Benachrichtigungen in den Geräteeinstellungen.'
-      );
-    }
   };
 
   const handleRefreshWords = async () => {
     setRefreshingWords(true);
     try {
       await clearTodaysWords();
-      Alert.alert(
-        'Neue Wörter',
-        'Die Wörter des Tages wurden zurückgesetzt. Gehe zur Startseite, um die neuen Wörter zu sehen.'
-      );
-    } catch (err) {
-      console.error('Failed to refresh words:', err);
-      Alert.alert('Fehler', 'Wörter konnten nicht aktualisiert werden.');
+      Toast.show({
+        type: 'success',
+        text1: 'Neue Wörter',
+        text2: 'Gehe zur Startseite, um die neuen Wörter zu sehen',
+      });
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: 'Fehler',
+        text2: 'Wörter konnten nicht zurückgesetzt werden',
+      });
     }
     setRefreshingWords(false);
   };
