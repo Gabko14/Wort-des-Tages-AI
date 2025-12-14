@@ -458,7 +458,11 @@ Die App verwendet **keine klassische Benutzerauthentifizierung**:
 | KI-Integration      | 07.01.2026 | 🔄 In Arbeit     | KI-Features für erweiterte Lernfunktionen, kontextuelle Erklärungen, Performance-Optimierung |
 | Zusatz/Sonstiges    | -          | 📋 Offen         | Zusätzliche Features und Verbesserungen                                                      |
 
-### Feature-Timeline (aus Git-Historie)
+<img src="./docs/screenshots/github-projects-roadmap.png" alt="Roadmap" width="950">
+
+https://github.com/users/Gabko14/projects/11/views/4
+
+### Feature-Timeline
 
 | Datum     | Feature                                        |
 | --------- | ---------------------------------------------- |
