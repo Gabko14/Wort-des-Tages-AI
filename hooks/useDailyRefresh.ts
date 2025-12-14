@@ -12,10 +12,7 @@ export function useDailyRefresh(onNewDay: () => void): void {
 
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === 'active'
-      ) {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         const today = getTodayDateString();
         if (today !== lastLoadedDate.current) {
           lastLoadedDate.current = today;
@@ -25,10 +22,7 @@ export function useDailyRefresh(onNewDay: () => void): void {
       appState.current = nextAppState;
     };
 
-    const subscription = AppState.addEventListener(
-      'change',
-      handleAppStateChange
-    );
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove();

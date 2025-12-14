@@ -38,9 +38,7 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function enrichWords(
-  words: Wort[]
-): Promise<EnrichedWord[] | null> {
+export async function enrichWords(words: Wort[]): Promise<EnrichedWord[] | null> {
   if (words.length === 0) return null;
 
   const cacheKey = buildCacheKey(words);

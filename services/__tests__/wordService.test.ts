@@ -58,10 +58,7 @@ describe('wordService', () => {
       'Verb',
       'Adjektiv',
     ]);
-    (settingsService.getFrequencyClasses as jest.Mock).mockReturnValue([
-      '2',
-      '3',
-    ]);
+    (settingsService.getFrequencyClasses as jest.Mock).mockReturnValue(['2', '3']);
   });
 
   describe('getTodaysWords', () => {
@@ -210,14 +207,7 @@ describe('wordService', () => {
     });
 
     it('should handle more than 5 words by truncating', async () => {
-      const manyWords = [
-        mockWort,
-        mockWort2,
-        mockWort,
-        mockWort2,
-        mockWort,
-        mockWort2,
-      ];
+      const manyWords = [mockWort, mockWort2, mockWort, mockWort2, mockWort, mockWort2];
 
       await saveTodaysWords(manyWords);
 
@@ -259,9 +249,7 @@ describe('wordService', () => {
 
     it('should use settings for word count when generating', async () => {
       const customSettings = { ...mockSettings, wordCount: 5 };
-      (settingsService.loadSettings as jest.Mock).mockResolvedValue(
-        customSettings
-      );
+      (settingsService.loadSettings as jest.Mock).mockResolvedValue(customSettings);
 
       mockDb.getFirstAsync.mockResolvedValueOnce(null);
       mockDb.getAllAsync.mockResolvedValueOnce([

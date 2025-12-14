@@ -1,19 +1,12 @@
 module.exports = {
-  extends: ['expo', 'plugin:prettier/recommended'],
+  extends: ['expo', 'prettier'],
   plugins: ['import'],
   rules: {
-    'prettier/prettier': ['warn', { endOfLine: 'auto' }],
-
     // Import-Sortierung
     'import/order': [
       'warn',
       {
-        groups: [
-          'builtin',
-          'external',
-          'internal',
-          ['parent', 'sibling', 'index'],
-        ],
+        groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index']],
         pathGroups: [
           {
             pattern: 'react',
@@ -82,11 +75,7 @@ module.exports = {
     },
     // Test-Dateien
     {
-      files: [
-        '**/__tests__/**/*.[jt]s?(x)',
-        '**/?(*.)+(spec|test).[jt]s?(x)',
-        'jest-setup.js',
-      ],
+      files: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)', 'jest-setup.js'],
       env: {
         jest: true,
       },

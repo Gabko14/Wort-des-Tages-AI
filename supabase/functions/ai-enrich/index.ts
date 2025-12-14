@@ -166,13 +166,10 @@ serve(async (req) => {
 
   const premium = await isPremium(deviceId);
   if (!premium) {
-    return new Response(
-      JSON.stringify({ error: 'not_premium', message: 'Premium erforderlich' }),
-      {
-        status: 402,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'not_premium', message: 'Premium erforderlich' }), {
+      status: 402,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {

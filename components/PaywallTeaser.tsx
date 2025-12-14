@@ -10,9 +10,7 @@ export function PaywallTeaser({ onPress }: PaywallTeaserProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Premium-Feature</Text>
-      <Text style={styles.text}>
-        Schalte Premium frei, um KI-Aufgaben und Beispiele zu sehen.
-      </Text>
+      <Text style={styles.text}>Schalte Premium frei, um KI-Aufgaben und Beispiele zu sehen.</Text>
       <TouchableOpacity style={styles.button} onPress={onPress}>
         <Text style={styles.buttonText}>Premium freischalten</Text>
       </TouchableOpacity>

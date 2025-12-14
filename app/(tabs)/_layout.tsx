@@ -40,10 +40,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: useClientOnlyValue(false, true),
         headerRight: () => (
-          <TouchableOpacity
-            onPress={showUpdateDetails}
-            style={{ marginRight: 16 }}
-          >
+          <TouchableOpacity onPress={showUpdateDetails} style={{ marginRight: 16 }}>
             <Text style={{ opacity: 0.5, fontSize: 14, color: textColor }}>
               v{info.version} ({info.updateId})
             </Text>

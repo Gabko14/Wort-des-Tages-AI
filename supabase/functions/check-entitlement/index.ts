@@ -60,11 +60,8 @@ serve(async (req) => {
   const isPremium = data?.is_premium ?? false;
   const source = data?.premium_source ?? null;
 
-  return new Response(
-    JSON.stringify({ isPremium, source: source ?? undefined }),
-    {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }
-  );
+  return new Response(JSON.stringify({ isPremium, source: source ?? undefined }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 });
