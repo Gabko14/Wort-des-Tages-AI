@@ -43,3 +43,5 @@ yarn-error.*
 # jetbrains
 .idea
 
+
+.env.local

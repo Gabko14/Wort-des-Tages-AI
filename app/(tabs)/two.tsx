@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 
+import * as Sentry from '@sentry/react-native';
 import Toast from 'react-native-toast-message';
 
 import { Button } from '@/components/Button';
@@ -41,7 +42,13 @@ export default function SettingsScreen() {
       .then((loaded) => {
         setSettings(loaded);
       })
-      .catch(() => {
+      .catch((err) => {
+        if (!__DEV__) {
+          Sentry.captureException(err, {
+            tags: { feature: 'settings_load' },
+            level: 'error',
+          });
+        }
         Toast.show({
           type: 'error',
           text1: 'Fehler beim Laden',
@@ -58,7 +65,13 @@ export default function SettingsScreen() {
     setSaving(true);
     try {
       await saveSettings(newSettings);
-    } catch {
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'settings_save' },
+          level: 'error',
+        });
+      }
       Toast.show({
         type: 'error',
         text1: 'Fehler beim Speichern',
@@ -105,7 +118,13 @@ export default function SettingsScreen() {
             text2: 'Bitte erlaube Benachrichtigungen in den Einstellungen',
           });
         }
-      } catch {
+      } catch (err) {
+        if (!__DEV__) {
+          Sentry.captureException(err, {
+            tags: { feature: 'notification_enable' },
+            level: 'error',
+          });
+        }
         Toast.show({
           type: 'error',
           text1: 'Fehler',
@@ -120,7 +139,13 @@ export default function SettingsScreen() {
           type: 'success',
           text1: 'Benachrichtigungen deaktiviert',
         });
-      } catch {
+      } catch (err) {
+        if (!__DEV__) {
+          Sentry.captureException(err, {
+            tags: { feature: 'notification_disable' },
+            level: 'error',
+          });
+        }
         Toast.show({
           type: 'error',
           text1: 'Fehler',
@@ -142,7 +167,13 @@ export default function SettingsScreen() {
           text1: 'Zeit geändert',
           text2: `Benachrichtigung um ${time} Uhr`,
         });
-      } catch {
+      } catch (err) {
+        if (!__DEV__) {
+          Sentry.captureException(err, {
+            tags: { feature: 'notification_time_change' },
+            level: 'error',
+          });
+        }
         Toast.show({
           type: 'error',
           text1: 'Fehler',
@@ -161,7 +192,13 @@ export default function SettingsScreen() {
         text1: 'Premium aktiviert',
         text2: 'Dev-Premium wurde erfolgreich aktiviert',
       });
-    } catch {
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'dev_premium_grant' },
+          level: 'error',
+        });
+      }
       Toast.show({
         type: 'error',
         text1: 'Fehler',
@@ -188,7 +225,13 @@ export default function SettingsScreen() {
           text2: 'Bitte erlaube Benachrichtigungen in den Einstellungen',
         });
       }
-    } catch {
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'test_notification' },
+          level: 'error',
+        });
+      }
       Toast.show({
         type: 'error',
         text1: 'Fehler',
@@ -207,7 +250,13 @@ export default function SettingsScreen() {
         text1: 'Neue Wörter',
         text2: 'Gehe zur Startseite, um die neuen Wörter zu sehen',
       });
-    } catch {
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'word_refresh' },
+          level: 'error',
+        });
+      }
       Toast.show({
         type: 'error',
         text1: 'Fehler',

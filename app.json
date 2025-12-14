@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wort-des-Tages-AI",
     "slug": "Wort-des-Tages-AI",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "wortdestagesai",
@@ -30,7 +30,18 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": ["expo-router", "expo-updates"],
+    "plugins": [
+      "expo-router",
+      "expo-updates",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "gibb-jw"
+        }
+      ]
+    ],
     "assetBundlePatterns": ["assets/database/*"],
     "experiments": {
       "typedRoutes": true
