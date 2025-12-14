@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/config/supabase';
 import { Wort } from '@/services/database';
 import { EnrichedWord } from '@/types/ai';
+import { AppError } from '@/utils/appError';
 
 import { getDeviceId } from './deviceService';
 
@@ -38,8 +39,11 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function enrichWords(words: Wort[]): Promise<EnrichedWord[] | null> {
-  if (words.length === 0) return null;
+export async function enrichWords(words: Wort[]): Promise<EnrichedWord[]> {
+  if (words.length === 0) return [];
+  if (!supabase) {
+    throw new AppError('supabase_not_configured', 'KI ist nicht verfügbar (Konfiguration fehlt).');
+  }
 
   const cacheKey = buildCacheKey(words);
   const cached = await getCached(cacheKey);
@@ -58,19 +62,27 @@ export async function enrichWords(words: Wort[]): Promise<EnrichedWord[] | null>
     })),
   };
 
-  let lastError: Error | null = null;
+  const client = supabase;
+  let lastError: unknown = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const { data, error } = await supabase.functions.invoke('ai-enrich', {
-      body: payload,
-    });
+    let data: unknown;
+    let error: unknown;
+    try {
+      const result = await client.functions.invoke('ai-enrich', { body: payload });
+      data = result.data;
+      error = result.error;
+    } catch (err) {
+      error = err;
+    }
 
     if (!error) {
-      const enriched = (data?.enrichedWords as EnrichedWord[]) ?? null;
-      if (enriched) {
-        await setCache(cacheKey, enriched);
+      const enriched = (data as any)?.enrichedWords;
+      if (Array.isArray(enriched)) {
+        await setCache(cacheKey, enriched as EnrichedWord[]);
+        return enriched as EnrichedWord[];
       }
-      return enriched;
+      return [];
     }
 
     lastError = error;
@@ -80,6 +92,5 @@ export async function enrichWords(words: Wort[]): Promise<EnrichedWord[] | null>
     }
   }
 
-  console.error('AI enrichment failed after retries:', lastError);
-  return null;
+  throw new AppError('ai_enrich_failed', 'KI ist gerade nicht verfügbar.', lastError);
 }

@@ -16,6 +16,10 @@ export function PremiumGate({ fallback, children }: PremiumGateProps) {
   useEffect(() => {
     checkPremiumStatus()
       .then((status) => setAllowed(status.isPremium))
+      .catch((err) => {
+        console.error('Failed to check premium status:', err);
+        setAllowed(false);
+      })
       .finally(() => setLoading(false));
   }, []);
 

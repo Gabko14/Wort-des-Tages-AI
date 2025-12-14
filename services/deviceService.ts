@@ -36,14 +36,22 @@ async function generateDeviceId(): Promise<string> {
 export async function getDeviceId(): Promise<string> {
   if (cachedId) return cachedId;
 
-  const stored = await AsyncStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    cachedId = stored;
-    return stored;
+  try {
+    const stored = await AsyncStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      cachedId = stored;
+      return stored;
+    }
+  } catch (err) {
+    console.error('Failed to read device ID from storage:', err);
   }
 
   const newId = await generateDeviceId();
-  await AsyncStorage.setItem(STORAGE_KEY, newId);
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, newId);
+  } catch (err) {
+    console.error('Failed to persist device ID:', err);
+  }
   cachedId = newId;
   return newId;
 }

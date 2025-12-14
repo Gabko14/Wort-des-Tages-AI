@@ -34,21 +34,34 @@ export default function SettingsScreen() {
   const [devGranting, setDevGranting] = useState(false);
 
   useEffect(() => {
-    loadSettings().then((loaded) => {
-      setSettings(loaded);
-      setLoading(false);
-    });
+    loadSettings()
+      .then((loaded) => {
+        setSettings(loaded);
+      })
+      .catch((err) => {
+        console.error('Failed to load settings:', err);
+        Alert.alert('Fehler', 'Einstellungen konnten nicht geladen werden.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const updateSettings = useCallback(async (newSettings: AppSettings) => {
     setSettings(newSettings);
     setSaving(true);
-    await saveSettings(newSettings);
-    setSaving(false);
+    try {
+      await saveSettings(newSettings);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      Alert.alert('Fehler', 'Einstellungen konnten nicht gespeichert werden.');
+    } finally {
+      setSaving(false);
+    }
   }, []);
 
   const handleWordCountChange = (value: number) => {
-    updateSettings({ ...settings, wordCount: Math.round(value) });
+    void updateSettings({ ...settings, wordCount: Math.round(value) });
   };
 
   const handleWordTypeToggle = (type: keyof AppSettings['wordTypes']) => {
@@ -58,27 +71,37 @@ export default function SettingsScreen() {
     };
     const activeCount = Object.values(newWordTypes).filter(Boolean).length;
     if (activeCount === 0) return;
-    updateSettings({ ...settings, wordTypes: newWordTypes });
+    void updateSettings({ ...settings, wordTypes: newWordTypes });
   };
 
   const handleFrequencyChange = (range: FrequencyRange) => {
-    updateSettings({ ...settings, frequencyRange: range });
+    void updateSettings({ ...settings, frequencyRange: range });
   };
 
   const handleNotificationToggle = async (enabled: boolean) => {
     if (enabled) {
-      const identifier = await scheduleDailyNotification(settings.notificationTime);
-      if (identifier) {
-        updateSettings({ ...settings, notificationsEnabled: true });
-      } else {
-        Alert.alert(
-          'Berechtigung erforderlich',
-          'Bitte erlaube Benachrichtigungen in den Geräteeinstellungen.'
-        );
+      try {
+        const identifier = await scheduleDailyNotification(settings.notificationTime);
+        if (identifier) {
+          void updateSettings({ ...settings, notificationsEnabled: true });
+        } else {
+          Alert.alert(
+            'Berechtigung erforderlich',
+            'Bitte erlaube Benachrichtigungen in den Geräteeinstellungen.'
+          );
+        }
+      } catch (err) {
+        console.error('Failed to enable notifications:', err);
+        Alert.alert('Fehler', 'Benachrichtigungen konnten nicht aktiviert werden.');
       }
     } else {
-      await cancelAllNotifications();
-      updateSettings({ ...settings, notificationsEnabled: false });
+      try {
+        await cancelAllNotifications();
+        void updateSettings({ ...settings, notificationsEnabled: false });
+      } catch (err) {
+        console.error('Failed to disable notifications:', err);
+        Alert.alert('Fehler', 'Benachrichtigungen konnten nicht deaktiviert werden.');
+      }
     }
   };
 
@@ -87,13 +110,23 @@ export default function SettingsScreen() {
     await updateSettings(newSettings);
 
     if (settings.notificationsEnabled) {
-      await scheduleDailyNotification(time);
+      try {
+        await scheduleDailyNotification(time);
+      } catch (err) {
+        console.error('Failed to reschedule notification:', err);
+        Alert.alert('Fehler', 'Benachrichtigung konnte nicht aktualisiert werden.');
+      }
     }
   };
 
   const handleDevPremium = async () => {
     setDevGranting(true);
-    const success = await grantPremium('dev');
+    let success = false;
+    try {
+      success = await grantPremium('dev');
+    } catch (err) {
+      console.error('Failed to grant premium:', err);
+    }
     setDevGranting(false);
     Alert.alert(
       success ? 'Premium aktiviert' : 'Fehler',

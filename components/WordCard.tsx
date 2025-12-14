@@ -1,4 +1,4 @@
-import { Linking, Pressable, StyleSheet } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet } from 'react-native';
 
 import { Wort } from '@/services/database';
 import { EnrichedWord } from '@/types/ai';
@@ -21,7 +21,10 @@ export function WordCard({ word, enriched, aiLoading, aiError }: WordCardProps) 
 
   const handleOpenUrl = () => {
     if (word.url) {
-      Linking.openURL(word.url);
+      void Linking.openURL(word.url).catch((err) => {
+        console.error('Failed to open URL:', err);
+        Alert.alert('Fehler', 'Link konnte nicht geöffnet werden.');
+      });
     }
   };
 

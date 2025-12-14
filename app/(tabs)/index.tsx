@@ -32,24 +32,31 @@ export default function HomeScreen() {
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);
 
-      const premiumStatus = await checkPremiumStatus();
-      setIsPremium(premiumStatus.isPremium);
+      let premiumEnabled = false;
+      try {
+        const premiumStatus = await checkPremiumStatus();
+        premiumEnabled = premiumStatus.isPremium;
+      } catch (err) {
+        console.error('Premium status check failed:', err);
+      }
 
-      if (premiumStatus.isPremium) {
+      setIsPremium(premiumEnabled);
+
+      if (premiumEnabled) {
         setAiLoading(true);
         setAiError(false);
-        enrichWords(todaysWords)
+        void enrichWords(todaysWords)
           .then((result) => {
-            if (!result) {
-              setAiError(true);
-              setEnrichedMap({});
-              return;
-            }
             const next: Record<number, EnrichedWord> = {};
             result.forEach((item) => {
               next[item.wordId] = item;
             });
             setEnrichedMap(next);
+          })
+          .catch((err) => {
+            console.error('AI enrichment failed:', err);
+            setAiError(true);
+            setEnrichedMap({});
           })
           .finally(() => setAiLoading(false));
       }

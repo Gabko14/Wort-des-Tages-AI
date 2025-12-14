@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/config/supabase';
 import { PremiumStatus } from '@/types/premium';
+import { AppError } from '@/utils/appError';
 
 import { getDeviceId } from './deviceService';
 
@@ -10,12 +11,22 @@ let cachedStatus: PremiumStatus | null = null;
 
 async function persistStatus(status: PremiumStatus) {
   cachedStatus = status;
-  await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(status));
+  try {
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(status));
+  } catch (err) {
+    console.error('Failed to persist premium status:', err);
+  }
 }
 
 async function loadCachedStatus(): Promise<PremiumStatus | null> {
   if (cachedStatus) return cachedStatus;
-  const stored = await AsyncStorage.getItem(CACHE_KEY);
+  let stored: string | null = null;
+  try {
+    stored = await AsyncStorage.getItem(CACHE_KEY);
+  } catch (err) {
+    console.error('Failed to read cached premium status:', err);
+    return null;
+  }
   if (!stored) return null;
   try {
     const parsed = JSON.parse(stored) as PremiumStatus;
@@ -27,19 +38,33 @@ async function loadCachedStatus(): Promise<PremiumStatus | null> {
 }
 
 export async function checkPremiumStatus(): Promise<PremiumStatus> {
+  if (!supabase) {
+    throw new AppError('supabase_not_configured', 'Premium-Status kann nicht geprüft werden.');
+  }
+
   const deviceId = await getDeviceId();
-  const { data, error } = await supabase.functions.invoke('check-entitlement', {
-    body: { deviceId },
-  });
+  let data: unknown;
+  let error: unknown;
+  try {
+    const client = supabase;
+    const result = await client.functions.invoke('check-entitlement', { body: { deviceId } });
+    data = result.data;
+    error = result.error;
+  } catch (err) {
+    error = err;
+  }
 
   if (error) {
-    const fallback = (await loadCachedStatus()) ?? { isPremium: false };
-    return fallback;
+    throw new AppError(
+      'premium_check_failed',
+      'Premium-Status konnte nicht geprüft werden.',
+      error
+    );
   }
 
   const status: PremiumStatus = {
-    isPremium: data?.isPremium ?? false,
-    source: data?.source ?? undefined,
+    isPremium: (data as any)?.isPremium ?? false,
+    source: (data as any)?.source ?? undefined,
   };
 
   await persistStatus(status);
@@ -49,13 +74,22 @@ export async function checkPremiumStatus(): Promise<PremiumStatus> {
 export async function grantPremium(
   source: 'dev' | 'google_play' | 'apple' = 'dev'
 ): Promise<boolean> {
+  if (!supabase) {
+    throw new AppError('supabase_not_configured', 'Premium kann nicht aktiviert werden.');
+  }
+
   const deviceId = await getDeviceId();
-  const { error } = await supabase.functions.invoke('grant-premium', {
-    body: { deviceId, source },
-  });
+  let error: unknown;
+  try {
+    const client = supabase;
+    const result = await client.functions.invoke('grant-premium', { body: { deviceId, source } });
+    error = result.error;
+  } catch (err) {
+    error = err;
+  }
 
   if (error) {
-    return false;
+    throw new AppError('premium_grant_failed', 'Premium konnte nicht aktiviert werden.', error);
   }
 
   await persistStatus({ isPremium: true, source });

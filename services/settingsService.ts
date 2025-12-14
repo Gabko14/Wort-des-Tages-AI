@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { AppError } from '@/utils/appError';
+
 const SETTINGS_KEY = 'user_settings';
 
 export type FrequencyRange = 'selten' | 'mittel' | 'haeufig';
@@ -42,7 +44,15 @@ export async function loadSettings(): Promise<AppSettings> {
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  try {
+    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (err) {
+    throw new AppError(
+      'settings_save_failed',
+      'Einstellungen konnten nicht gespeichert werden.',
+      err
+    );
+  }
 }
 
 export function getFrequencyClasses(range: FrequencyRange): string[] {

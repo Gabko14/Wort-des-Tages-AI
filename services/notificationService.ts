@@ -1,67 +1,165 @@
 import { Platform } from 'react-native';
 
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import type { NotificationRequest } from 'expo-notifications';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+import { AppError } from '@/utils/appError';
 
-export async function requestNotificationPermissions(): Promise<boolean> {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('daily-reminder', {
-      name: 'Tägliche Erinnerung',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-    });
-  }
+let didWarnExpoGo = false;
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  return finalStatus === 'granted';
+function isExpoGo(): boolean {
+  return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 }
 
-export async function scheduleDailyNotification(timeString: string): Promise<string | null> {
-  const hasPermission = await requestNotificationPermissions();
-  if (!hasPermission) {
+async function getNotificationsModule() {
+  if (isExpoGo()) {
+    if (!didWarnExpoGo) {
+      didWarnExpoGo = true;
+      console.warn('Notifications are disabled in Expo Go for this app.');
+    }
     return null;
   }
 
-  await cancelAllNotifications();
+  let Notifications: typeof import('expo-notifications');
+  try {
+    Notifications = await import('expo-notifications');
+  } catch (err) {
+    throw new AppError(
+      'notifications_unavailable',
+      'Benachrichtigungen sind nicht verfügbar.',
+      err
+    );
+  }
 
-  const [hours, minutes] = timeString.split(':').map(Number);
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+  } catch (err) {
+    console.error('Failed to set notification handler:', err);
+  }
 
-  const identifier = await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Wort des Tages 📚',
-      body: 'Zeit für deine täglichen Wörter! Lerne heute neue Vokabeln.',
-      data: { screen: 'home' },
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: hours,
-      minute: minutes,
-    },
-  });
+  return Notifications;
+}
 
-  return identifier;
+export async function requestNotificationPermissions(): Promise<boolean> {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return false;
+  }
+
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('daily-reminder', {
+        name: 'Tägliche Erinnerung',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    return finalStatus === 'granted';
+  } catch (err) {
+    throw new AppError(
+      'notifications_permission_failed',
+      'Benachrichtigungen konnten nicht aktiviert werden.',
+      err
+    );
+  }
+}
+
+export async function scheduleDailyNotification(timeString: string): Promise<string | null> {
+  try {
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) {
+      return null;
+    }
+
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return null;
+    }
+
+    await cancelAllNotifications();
+
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const isValidTime =
+      Number.isFinite(hours) &&
+      Number.isFinite(minutes) &&
+      hours >= 0 &&
+      hours <= 23 &&
+      minutes >= 0 &&
+      minutes <= 59;
+    if (!isValidTime) {
+      return null;
+    }
+
+    const identifier = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Wort des Tages',
+        body: 'Zeit für deine täglichen Wörter! Lerne heute neue Vokabeln.',
+        data: { screen: 'home' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: hours,
+        minute: minutes,
+      },
+    });
+
+    return identifier;
+  } catch (err) {
+    throw new AppError(
+      'notifications_schedule_failed',
+      'Benachrichtigung konnte nicht geplant werden.',
+      err
+    );
+  }
 }
 
 export async function cancelAllNotifications(): Promise<void> {
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch (err) {
+    throw new AppError(
+      'notifications_schedule_failed',
+      'Benachrichtigungen konnten nicht deaktiviert werden.',
+      err
+    );
+  }
 }
 
-export async function getScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
-  return Notifications.getAllScheduledNotificationsAsync();
+export async function getScheduledNotifications(): Promise<NotificationRequest[]> {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return [];
+  }
+
+  try {
+    return await Notifications.getAllScheduledNotificationsAsync();
+  } catch (err) {
+    throw new AppError(
+      'notifications_schedule_failed',
+      'Benachrichtigungen konnten nicht geladen werden.',
+      err
+    );
+  }
 }
