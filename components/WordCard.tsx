@@ -133,12 +133,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
   },
-  expandHint: {
-    fontSize: 14,
-    opacity: 0.5,
-    fontStyle: 'italic',
-    marginTop: 4,
-  },
   section: {
     marginBottom: 12,
     backgroundColor: 'transparent',

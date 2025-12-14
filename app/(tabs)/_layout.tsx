@@ -41,9 +41,7 @@ export default function TabLayout() {
         headerShown: useClientOnlyValue(false, true),
         headerRight: () => (
           <TouchableOpacity onPress={showUpdateDetails} style={{ marginRight: 16 }}>
-            <Text style={{ opacity: 0.5, fontSize: 14, color: textColor }}>
-              v{info.version} ({info.updateId})
-            </Text>
+            <Text style={{ opacity: 0.5, fontSize: 14, color: textColor }}>v{info.version}</Text>
           </TouchableOpacity>
         ),
       }}

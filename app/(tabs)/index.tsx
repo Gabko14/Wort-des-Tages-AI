@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet } from 'react-native';
 
+import * as Sentry from '@sentry/react-native';
 import Toast from 'react-native-toast-message';
 
 import { EmptyState } from '@/components/EmptyState';
@@ -40,7 +41,13 @@ export default function HomeScreen() {
       try {
         const premiumStatus = await checkPremiumStatus();
         premiumEnabled = premiumStatus.isPremium;
-      } catch {
+      } catch (err) {
+        if (!__DEV__) {
+          Sentry.captureException(err, {
+            tags: { feature: 'premium_check' },
+            level: 'warning',
+          });
+        }
         Toast.show({
           type: 'info',
           text1: 'Premium-Prüfung fehlgeschlagen',
@@ -62,7 +69,13 @@ export default function HomeScreen() {
             });
             setEnrichedMap(next);
           })
-          .catch(() => {
+          .catch((err) => {
+            if (!__DEV__) {
+              Sentry.captureException(err, {
+                tags: { feature: 'ai_enrichment' },
+                level: 'error',
+              });
+            }
             setAiError(true);
             setEnrichedMap({});
             Toast.show({
@@ -74,7 +87,13 @@ export default function HomeScreen() {
           })
           .finally(() => setAiLoading(false));
       }
-    } catch {
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'word_loading' },
+          level: 'error',
+        });
+      }
       setError('Fehler beim Laden der Wörter');
     } finally {
       setLoading(false);
@@ -120,6 +139,25 @@ export default function HomeScreen() {
 
   const keyExtractor = useCallback((item: Wort) => item.id.toString(), []);
 
+  const ListHeader = useMemo(
+    () => (
+      <View style={styles.header}>
+        <Text style={styles.title}>Wörter des Tages</Text>
+        <Text style={styles.subtitle}>
+          {new Date().toLocaleDateString('de-DE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </Text>
+      </View>
+    ),
+    [] // Date formatting happens once per component mount, refreshes on daily reload
+  );
+
+  const ListEmpty = useMemo(() => <EmptyState />, []);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -137,22 +175,6 @@ export default function HomeScreen() {
   if (error) {
     return <ErrorState message={error} onRetry={loadWords} />;
   }
-
-  const ListHeader = (
-    <View style={styles.header}>
-      <Text style={styles.title}>Wörter des Tages</Text>
-      <Text style={styles.subtitle}>
-        {new Date().toLocaleDateString('de-DE', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })}
-      </Text>
-    </View>
-  );
-
-  const ListEmpty = <EmptyState />;
 
   return (
     <FlatList

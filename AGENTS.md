@@ -41,10 +41,11 @@ npx expo install   # Install dependencies with version alignment
 /components       - Reusable React components (named exports)
 /services         - Business logic & data access (throw errors)
 /hooks            - Custom React hooks (UI logic)
-/config           - Supabase client configuration
+/config           - Supabase client, Toast customization
 /constants        - Colors, Layout, Fonts
 /types            - TypeScript type definitions
 /assets           - Images, Fonts, bundled DB
+/utils            - Error handling utilities (AppError)
 /supabase
   /functions      - Deno Edge Functions (ai-enrich, check-entitlement, grant-premium)
   /migrations     - Database migrations for Supabase
@@ -72,6 +73,18 @@ npx expo install   # Install dependencies with version alignment
 - **Services throw, UI catches**: service functions should throw a typed `AppError` (see `utils/appError.ts`) and let screens/components decide how to recover or show messaging.
 - **Never leave promises unhandled**: use `await` + `try/catch`, or attach `.catch()` for "fire-and-forget" calls.
 - **Render-time failures**: rely on Expo Router's error boundary (`app/_layout.tsx`) as a last-resort recovery screen.
+
+### User Feedback & Error Tracking
+
+- **User feedback**: Toast notifications (`config/toastConfig.tsx`), never `Alert.alert` or `console.error`
+- **Production tracking**: Sentry in `app/_layout.tsx`, wrap all catch blocks:
+
+  ```typescript
+  catch (err) {
+    if (!__DEV__) Sentry.captureException(err, { tags: { feature: 'x' }, level: 'error' });
+    Toast.show({ type: 'error', text1: 'Title', text2: 'Message' });
+  }
+  ```
 
 ### AppError Conventions
 

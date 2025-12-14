@@ -1,4 +1,4 @@
-import { useColorScheme as RNUseColorScheme, StyleSheet, View } from 'react-native';
+import { ColorSchemeName, StyleSheet, View } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { BaseToast, BaseToastProps, ErrorToast, InfoToast } from 'react-native-toast-message';
@@ -6,10 +6,12 @@ import { BaseToast, BaseToastProps, ErrorToast, InfoToast } from 'react-native-t
 /**
  * Custom toast configuration matching app's design system.
  * Uses same styling as WordCard: rounded corners, shadows, themed colors.
+ *
+ * @param colorScheme - Current color scheme ('light' or 'dark'), passed from the root layout
+ * @returns Toast configuration object compatible with react-native-toast-message
  */
-export const toastConfig = {
+export const createToastConfig = (colorScheme: ColorSchemeName) => ({
   success: (props: BaseToastProps) => {
-    const colorScheme = RNUseColorScheme();
     const isDark = colorScheme === 'dark';
 
     return (
@@ -40,7 +42,6 @@ export const toastConfig = {
   },
 
   error: (props: BaseToastProps) => {
-    const colorScheme = RNUseColorScheme();
     const isDark = colorScheme === 'dark';
 
     return (
@@ -71,7 +72,6 @@ export const toastConfig = {
   },
 
   info: (props: BaseToastProps) => {
-    const colorScheme = RNUseColorScheme();
     const isDark = colorScheme === 'dark';
 
     return (
@@ -105,7 +105,7 @@ export const toastConfig = {
       </View>
     );
   },
-};
+});
 
 const styles = StyleSheet.create({
   toastContainer: {
