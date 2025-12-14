@@ -312,8 +312,8 @@ Die App verwendet **keine klassische Benutzerauthentifizierung**:
 
 ### Verschlüsselung während der Übertragung
 
-| Verbindung         | Verschlüsselung |
-| ------------------ | --------------- |
+| Verbindung        | Verschlüsselung |
+| ----------------- | --------------- |
 | App ↔ Supabase    | HTTPS/TLS 1.3   |
 | Supabase ↔ OpenAI | HTTPS/TLS 1.3   |
 
