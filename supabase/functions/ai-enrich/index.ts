@@ -30,10 +30,22 @@ if (!openAiKey) {
   throw new Error('OPENAI_API_KEY fehlt');
 }
 
+type QuizOption = {
+  id: string;
+  text: string;
+};
+
+type Quiz = {
+  question: string;
+  options: QuizOption[];
+  correctOptionId: string;
+};
+
 type EnrichedWord = {
   wordId: number;
   definition: string;
   exampleSentence: string;
+  quiz: Quiz;
 };
 
 async function isPremium(deviceId: string): Promise<boolean> {
@@ -52,18 +64,30 @@ async function isPremium(deviceId: string): Promise<boolean> {
 
 async function enrichWords(words: Wort[]): Promise<EnrichedWord[]> {
   const systemPrompt = `
-Du bist ein Assistent, der deutsche Woerter fuer Lernende erklaert.
+Du bist ein Assistent, der deutsche Woerter fuer Lernende erklaert und Multiple-Choice-Fragen erstellt.
 Liefere ein JSON-Objekt mit dem Schema:
 {
   "enrichedWords": [
     {
       "wordId": number,
       "definition": "kurze, einfache Erklaerung auf Deutsch",
-      "exampleSentence": "Beispielsatz auf Deutsch, der das Wort zeigt"
+      "exampleSentence": "Beispielsatz auf Deutsch, der das Wort zeigt",
+      "quiz": {
+        "question": "Frage zum Wort (z.B. Bedeutung, Verwendung oder Kontext)",
+        "options": [
+          { "id": "a", "text": "Antwortmoeglichkeit A" },
+          { "id": "b", "text": "Antwortmoeglichkeit B" },
+          { "id": "c", "text": "Antwortmoeglichkeit C" },
+          { "id": "d", "text": "Antwortmoeglichkeit D" }
+        ],
+        "correctOptionId": "a"
+      }
     }
   ]
 }
-Erklaerungen sollen knapp, praezise und alltagsnah sein. Keine weiteren Felder.`;
+Erklaerungen sollen knapp, praezise und alltagsnah sein.
+Die Quiz-Frage soll das Verstaendnis des Wortes testen (z.B. "Was bedeutet...?", "In welchem Kontext wird ... verwendet?").
+Die Antwortmoeglichkeiten sollen plausibel sein, aber nur eine ist richtig. Keine weiteren Felder.`;
 
   const userPrompt = JSON.stringify({
     words: words.map((w) => ({
