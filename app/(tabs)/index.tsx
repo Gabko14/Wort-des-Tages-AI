@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet } from 'react-native';
 
+import Toast from 'react-native-toast-message';
+
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
 import { Text, View } from '@/components/Themed';
@@ -38,8 +40,13 @@ export default function HomeScreen() {
       try {
         const premiumStatus = await checkPremiumStatus();
         premiumEnabled = premiumStatus.isPremium;
-      } catch (err) {
-        console.error('Premium status check failed:', err);
+      } catch {
+        Toast.show({
+          type: 'info',
+          text1: 'Premium-Prüfung fehlgeschlagen',
+          text2: 'AI-Funktionen werden nicht geladen',
+          visibilityTime: 3000,
+        });
       }
 
       setIsPremium(premiumEnabled);
@@ -55,15 +62,19 @@ export default function HomeScreen() {
             });
             setEnrichedMap(next);
           })
-          .catch((err) => {
-            console.error('AI enrichment failed:', err);
+          .catch(() => {
             setAiError(true);
             setEnrichedMap({});
+            Toast.show({
+              type: 'error',
+              text1: 'AI-Anreicherung fehlgeschlagen',
+              text2: 'Basisinformationen werden weiterhin angezeigt',
+              visibilityTime: 4000,
+            });
           })
           .finally(() => setAiLoading(false));
       }
-    } catch (err) {
-      console.error('Error loading words:', err);
+    } catch {
       setError('Fehler beim Laden der Wörter');
     } finally {
       setLoading(false);

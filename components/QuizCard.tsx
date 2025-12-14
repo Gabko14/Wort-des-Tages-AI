@@ -4,10 +4,9 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import * as Haptics from 'expo-haptics';
 
+import { Button } from '@/components/Button';
+import { Text, View, useThemeColor } from '@/components/Themed';
 import { Quiz, QuizOption } from '@/types/ai';
-
-import { Button } from './Button';
-import { Text, View, useThemeColor } from './Themed';
 
 interface QuizCardProps {
   quiz: Quiz;

@@ -21,11 +21,10 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
       <Button
         variant="primary"
         onPress={onRetry}
+        title="Erneut versuchen"
         icon="refresh"
         accessibilityLabel="Erneut versuchen"
-      >
-        Erneut versuchen
-      </Button>
+      />
     </View>
   );
 }

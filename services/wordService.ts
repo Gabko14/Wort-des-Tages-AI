@@ -1,12 +1,11 @@
-import { AppError } from '@/utils/appError';
-
-import { getDatabase, Wort } from './database';
+import { getDatabase, Wort } from '@/services/database';
 import {
   AppSettings,
   getFrequencyClasses,
   getSelectedWordTypes,
   loadSettings,
-} from './settingsService';
+} from '@/services/settingsService';
+import { AppError } from '@/utils/appError';
 
 function getTodayDateString(): string {
   const today = new Date();

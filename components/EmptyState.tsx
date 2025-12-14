@@ -27,11 +27,10 @@ export function EmptyState({
       <Button
         variant="primary"
         onPress={handleGoToSettings}
+        title="Einstellungen öffnen"
         icon="settings-outline"
         accessibilityLabel="Zu den Einstellungen"
-      >
-        Einstellungen öffnen
-      </Button>
+      />
     </View>
   );
 }

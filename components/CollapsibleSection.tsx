@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
-import { Text, View, useThemeColor } from './Themed';
+import { Text, View, useThemeColor } from '@/components/Themed';
 
 interface CollapsibleSectionProps {
   title: string;

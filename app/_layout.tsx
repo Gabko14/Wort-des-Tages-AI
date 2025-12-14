@@ -1,16 +1,18 @@
 import { useEffect } from 'react';
 
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { ErrorBoundaryProps, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Updates from 'expo-updates';
-
 import 'react-native-reanimated';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { toastConfig } from '@/config/toastConfig';
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
@@ -84,6 +86,7 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
+      <Toast config={toastConfig} />
     </ThemeProvider>
   );
 }

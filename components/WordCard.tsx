@@ -6,12 +6,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
+import { Button } from '@/components/Button';
+import { QuizCard } from '@/components/QuizCard';
+import { Text, View, useThemeColor } from '@/components/Themed';
 import { Wort } from '@/services/database';
 import { EnrichedWord } from '@/types/ai';
-
-import { Button } from './Button';
-import { QuizCard } from './QuizCard';
-import { Text, View, useThemeColor } from './Themed';
 
 interface WordCardProps {
   word: Wort;
