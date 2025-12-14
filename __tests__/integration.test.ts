@@ -36,9 +36,7 @@ describe('Application Integration Tests', () => {
 
     it('should support date comparison', () => {
       const today = new Date().toISOString().split('T')[0];
-      const yesterday = new Date(Date.now() - 86400000)
-        .toISOString()
-        .split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
       expect(today).not.toBe(yesterday);
     });
@@ -68,9 +66,7 @@ describe('Application Integration Tests', () => {
 
       const filtered = words.filter((w) => {
         return (
-          w.wortklasse !== 'Affix' &&
-          w.wortklasse !== 'Konjunktion' &&
-          w.frequenzklasse !== 'n/a'
+          w.wortklasse !== 'Affix' && w.wortklasse !== 'Konjunktion' && w.frequenzklasse !== 'n/a'
         );
       });
 
@@ -96,11 +92,7 @@ describe('Application Integration Tests', () => {
     });
 
     it('should validate anzahl_woerter range', () => {
-      const validSettings = [
-        { anzahl_woerter: 1 },
-        { anzahl_woerter: 3 },
-        { anzahl_woerter: 5 },
-      ];
+      const validSettings = [{ anzahl_woerter: 1 }, { anzahl_woerter: 3 }, { anzahl_woerter: 5 }];
 
       validSettings.forEach((s) => {
         expect(s.anzahl_woerter).toBeGreaterThanOrEqual(1);
@@ -119,8 +111,7 @@ describe('Application Integration Tests', () => {
       ];
 
       words.forEach((word) => {
-        const shouldDisplay =
-          !!word.frequenzklasse && word.frequenzklasse !== 'n/a';
+        const shouldDisplay = !!word.frequenzklasse && word.frequenzklasse !== 'n/a';
         expect(shouldDisplay).toBe(word.shouldDisplay);
       });
     });
@@ -169,11 +160,7 @@ describe('Application Integration Tests', () => {
     });
 
     it('should support valid URLs', () => {
-      const validUrls = [
-        'https://dwds.de/word1',
-        'https://example.com',
-        'http://test.com',
-      ];
+      const validUrls = ['https://dwds.de/word1', 'https://example.com', 'http://test.com'];
 
       validUrls.forEach((url) => {
         expect(url).toMatch(/^https?:\/\//);

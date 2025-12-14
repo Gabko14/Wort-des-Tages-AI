@@ -45,12 +45,8 @@ describe('Date Utilities', () => {
     });
 
     it('should handle date crossing midnight correctly', () => {
-      const date1 = new Date('2024-01-15T23:59:59Z')
-        .toISOString()
-        .split('T')[0];
-      const date2 = new Date('2024-01-16T00:00:00Z')
-        .toISOString()
-        .split('T')[0];
+      const date1 = new Date('2024-01-15T23:59:59Z').toISOString().split('T')[0];
+      const date2 = new Date('2024-01-16T00:00:00Z').toISOString().split('T')[0];
       expect(date1).not.toBe(date2);
     });
   });

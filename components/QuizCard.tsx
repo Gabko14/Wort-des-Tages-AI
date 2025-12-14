@@ -14,26 +14,11 @@ export function QuizCard({ quiz }: QuizCardProps) {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
 
-  const borderColor = useThemeColor(
-    { light: '#e9ecef', dark: '#333' },
-    'background'
-  );
-  const correctColor = useThemeColor(
-    { light: '#28a745', dark: '#5cb85c' },
-    'background'
-  );
-  const incorrectColor = useThemeColor(
-    { light: '#dc3545', dark: '#d9534f' },
-    'background'
-  );
-  const defaultOptionBg = useThemeColor(
-    { light: '#f8f9fa', dark: '#2a2a2a' },
-    'background'
-  );
-  const selectedOptionBg = useThemeColor(
-    { light: '#e7f1ff', dark: '#1a3a5c' },
-    'background'
-  );
+  const borderColor = useThemeColor({ light: '#e9ecef', dark: '#333' }, 'background');
+  const correctColor = useThemeColor({ light: '#28a745', dark: '#5cb85c' }, 'background');
+  const incorrectColor = useThemeColor({ light: '#dc3545', dark: '#d9534f' }, 'background');
+  const defaultOptionBg = useThemeColor({ light: '#f8f9fa', dark: '#2a2a2a' }, 'background');
+  const selectedOptionBg = useThemeColor({ light: '#e7f1ff', dark: '#1a3a5c' }, 'background');
 
   const handleOptionPress = useCallback(
     (optionId: string) => {
@@ -105,8 +90,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
                 styles.optionText,
                 showResult &&
                   (option.id === quiz.correctOptionId ||
-                    (selectedOptionId === option.id &&
-                      option.id !== quiz.correctOptionId)) &&
+                    (selectedOptionId === option.id && option.id !== quiz.correctOptionId)) &&
                   styles.resultOptionText,
               ]}
             >
@@ -118,10 +102,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
 
       {!showResult ? (
         <Pressable
-          style={[
-            styles.submitButton,
-            !selectedOptionId && styles.submitButtonDisabled,
-          ]}
+          style={[styles.submitButton, !selectedOptionId && styles.submitButtonDisabled]}
           onPress={handleSubmit}
           disabled={!selectedOptionId}
         >
@@ -129,12 +110,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
         </Pressable>
       ) : (
         <View style={styles.resultContainer}>
-          <Text
-            style={[
-              styles.resultText,
-              isCorrect ? styles.correctText : styles.incorrectText,
-            ]}
-          >
+          <Text style={[styles.resultText, isCorrect ? styles.correctText : styles.incorrectText]}>
             {isCorrect ? '✓ Richtig!' : '✗ Leider falsch'}
           </Text>
           <Pressable style={styles.resetButton} onPress={handleReset}>

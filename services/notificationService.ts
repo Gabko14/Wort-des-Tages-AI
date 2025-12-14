@@ -32,9 +32,7 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return finalStatus === 'granted';
 }
 
-export async function scheduleDailyNotification(
-  timeString: string
-): Promise<string | null> {
+export async function scheduleDailyNotification(timeString: string): Promise<string | null> {
   const hasPermission = await requestNotificationPermissions();
   if (!hasPermission) {
     return null;
@@ -64,8 +62,6 @@ export async function cancelAllNotifications(): Promise<void> {
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
-export async function getScheduledNotifications(): Promise<
-  Notifications.NotificationRequest[]
-> {
+export async function getScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
   return Notifications.getAllScheduledNotificationsAsync();
 }

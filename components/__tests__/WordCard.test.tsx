@@ -57,11 +57,9 @@ describe('WordCard Logic', () => {
     });
 
     it('should determine if frequency should be displayed', () => {
-      const shouldDisplay =
-        mockWort.frequenzklasse && mockWort.frequenzklasse !== 'n/a';
+      const shouldDisplay = mockWort.frequenzklasse && mockWort.frequenzklasse !== 'n/a';
       const shouldNotDisplay =
-        mockWortNoFrequency.frequenzklasse &&
-        mockWortNoFrequency.frequenzklasse !== 'n/a';
+        mockWortNoFrequency.frequenzklasse && mockWortNoFrequency.frequenzklasse !== 'n/a';
 
       expect(shouldDisplay).toBe(true);
       expect(shouldNotDisplay).toBe(false);

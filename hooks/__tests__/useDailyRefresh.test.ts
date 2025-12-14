@@ -22,12 +22,10 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation(
-      (_event: string, listener: any) => {
-        mockListener.mockImplementation(listener);
-        return { remove: jest.fn() };
-      }
-    );
+    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
+      mockListener.mockImplementation(listener);
+      return { remove: jest.fn() };
+    });
 
     renderHook(() => useDailyRefresh(onNewDay));
 
@@ -43,12 +41,10 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation(
-      (_event: string, listener: any) => {
-        mockListener.mockImplementation(listener);
-        return { remove: jest.fn() };
-      }
-    );
+    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
+      mockListener.mockImplementation(listener);
+      return { remove: jest.fn() };
+    });
 
     renderHook(() => useDailyRefresh(onNewDay));
 
@@ -72,10 +68,7 @@ describe('useDailyRefresh', () => {
 
     const { unmount } = renderHook(() => useDailyRefresh(onNewDay));
 
-    expect(AppState.addEventListener).toHaveBeenCalledWith(
-      'change',
-      expect.any(Function)
-    );
+    expect(AppState.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
 
     unmount();
 
@@ -86,12 +79,10 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation(
-      (_event: string, listener: any) => {
-        mockListener.mockImplementation(listener);
-        return { remove: jest.fn() };
-      }
-    );
+    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
+      mockListener.mockImplementation(listener);
+      return { remove: jest.fn() };
+    });
 
     renderHook(() => useDailyRefresh(onNewDay));
 
@@ -114,12 +105,10 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation(
-      (_event: string, listener: any) => {
-        mockListener.mockImplementation(listener);
-        return { remove: jest.fn() };
-      }
-    );
+    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
+      mockListener.mockImplementation(listener);
+      return { remove: jest.fn() };
+    });
 
     renderHook(() => useDailyRefresh(onNewDay));
 

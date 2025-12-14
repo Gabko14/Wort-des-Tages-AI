@@ -150,14 +150,7 @@ describe('Database Module', () => {
     });
 
     it('should validate word class values', () => {
-      const validWordClasses = [
-        'Substantiv',
-        'Adjektiv',
-        'Verb',
-        'Adverb',
-        'Konjunktion',
-        'Affix',
-      ];
+      const validWordClasses = ['Substantiv', 'Adjektiv', 'Verb', 'Adverb', 'Konjunktion', 'Affix'];
 
       validWordClasses.forEach((wortklasse) => {
         expect(typeof wortklasse).toBe('string');

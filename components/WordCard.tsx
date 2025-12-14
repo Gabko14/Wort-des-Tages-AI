@@ -13,28 +13,11 @@ interface WordCardProps {
   aiError?: boolean;
 }
 
-export function WordCard({
-  word,
-  enriched,
-  aiLoading,
-  aiError,
-}: WordCardProps) {
-  const cardBackground = useThemeColor(
-    { light: '#f8f9fa', dark: '#1a1a1a' },
-    'background'
-  );
-  const borderColor = useThemeColor(
-    { light: '#e9ecef', dark: '#333' },
-    'background'
-  );
-  const accentColor = useThemeColor(
-    { light: '#2f95dc', dark: '#4da6ff' },
-    'tint'
-  );
-  const mutedColor = useThemeColor(
-    { light: '#6c757d', dark: '#adb5bd' },
-    'text'
-  );
+export function WordCard({ word, enriched, aiLoading, aiError }: WordCardProps) {
+  const cardBackground = useThemeColor({ light: '#f8f9fa', dark: '#1a1a1a' }, 'background');
+  const borderColor = useThemeColor({ light: '#e9ecef', dark: '#333' }, 'background');
+  const accentColor = useThemeColor({ light: '#2f95dc', dark: '#4da6ff' }, 'tint');
+  const mutedColor = useThemeColor({ light: '#6c757d', dark: '#adb5bd' }, 'text');
 
   const handleOpenUrl = () => {
     if (word.url) {
@@ -43,25 +26,14 @@ export function WordCard({
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: cardBackground, borderColor: borderColor },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: cardBackground, borderColor: borderColor }]}>
       <Text style={styles.lemma}>{word.lemma}</Text>
       <View style={[styles.tagContainer, { backgroundColor: 'transparent' }]}>
         <View style={[styles.tag, { backgroundColor: accentColor }]}>
           <Text style={styles.tagText}>{word.wortklasse}</Text>
         </View>
         {word.frequenzklasse && word.frequenzklasse !== 'n/a' && (
-          <View
-            style={[
-              styles.tag,
-              styles.frequencyTag,
-              { backgroundColor: mutedColor },
-            ]}
-          >
+          <View style={[styles.tag, styles.frequencyTag, { backgroundColor: mutedColor }]}>
             <Text style={styles.tagText}>Frequenz: {word.frequenzklasse}</Text>
           </View>
         )}
@@ -78,17 +50,13 @@ export function WordCard({
           <Text style={styles.sectionText}>{enriched.exampleSentence}</Text>
         </View>
       )}
-      {aiLoading && !enriched && (
-        <Text style={styles.sectionText}>KI lädt...</Text>
-      )}
+      {aiLoading && !enriched && <Text style={styles.sectionText}>KI lädt...</Text>}
       {aiError && !enriched && !aiLoading && (
         <Text style={styles.errorText}>KI nicht verfügbar</Text>
       )}
       {enriched?.quiz && <QuizCard quiz={enriched.quiz} />}
       <Pressable onPress={handleOpenUrl} style={styles.linkButton}>
-        <Text style={[styles.linkText, { color: accentColor }]}>
-          Im DWDS nachschlagen →
-        </Text>
+        <Text style={[styles.linkText, { color: accentColor }]}>Im DWDS nachschlagen →</Text>
       </Pressable>
     </View>
   );

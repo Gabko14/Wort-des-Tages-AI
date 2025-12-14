@@ -48,8 +48,7 @@ describe('QuizCard Logic', () => {
 
   describe('Answer validation', () => {
     it('should identify correct answer', () => {
-      const isCorrect = (selectedId: string) =>
-        selectedId === mockQuiz.correctOptionId;
+      const isCorrect = (selectedId: string) => selectedId === mockQuiz.correctOptionId;
 
       expect(isCorrect('a')).toBe(true);
       expect(isCorrect('b')).toBe(false);
@@ -88,10 +87,7 @@ describe('QuizCard Logic', () => {
 
   describe('Result display logic', () => {
     it('should determine correct result message', () => {
-      const getResultMessage = (
-        selectedId: string,
-        correctId: string
-      ): string => {
+      const getResultMessage = (selectedId: string, correctId: string): string => {
         return selectedId === correctId ? '✓ Richtig!' : '✗ Leider falsch';
       };
 
@@ -100,8 +96,7 @@ describe('QuizCard Logic', () => {
     });
 
     it('should identify which option to highlight as correct', () => {
-      const isCorrectOption = (optionId: string) =>
-        optionId === mockQuiz.correctOptionId;
+      const isCorrectOption = (optionId: string) => optionId === mockQuiz.correctOptionId;
 
       expect(isCorrectOption('a')).toBe(true);
       expect(isCorrectOption('b')).toBe(false);

@@ -56,9 +56,7 @@ export function getFrequencyClasses(range: FrequencyRange): string[] {
   }
 }
 
-export function getSelectedWordTypes(
-  wordTypes: AppSettings['wordTypes']
-): string[] {
+export function getSelectedWordTypes(wordTypes: AppSettings['wordTypes']): string[] {
   const types: string[] = [];
   if (wordTypes.substantiv) types.push('Substantiv');
   if (wordTypes.verb) types.push('Verb');

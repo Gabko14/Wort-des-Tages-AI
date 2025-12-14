@@ -54,9 +54,7 @@ export interface WordSelectionOptions {
   frequencyClasses: string[];
 }
 
-export async function selectRandomWords(
-  options: WordSelectionOptions
-): Promise<Wort[]> {
+export async function selectRandomWords(options: WordSelectionOptions): Promise<Wort[]> {
   const db = await getDatabase();
   const { count, wordTypes, frequencyClasses } = options;
 

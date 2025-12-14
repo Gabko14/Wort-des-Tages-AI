@@ -66,9 +66,7 @@ type FrequencyRange = 'selten' | 'mittel' | 'haeufig';
 
 ```typescript
 // Always use generics for type-safe queries
-const words = await db.getAllAsync<Wort>('SELECT * FROM wort WHERE id = ?', [
-  id,
-]);
+const words = await db.getAllAsync<Wort>('SELECT * FROM wort WHERE id = ?', [id]);
 const setting = await db.getFirstAsync<UserSettings>('SELECT * FROM settings');
 ```
 

@@ -14,10 +14,7 @@ import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 
 import { Text, View } from '@/components/Themed';
-import {
-  cancelAllNotifications,
-  scheduleDailyNotification,
-} from '@/services/notificationService';
+import { cancelAllNotifications, scheduleDailyNotification } from '@/services/notificationService';
 import { grantPremium } from '@/services/premiumService';
 import {
   AppSettings,
@@ -28,15 +25,7 @@ import {
 } from '@/services/settingsService';
 import { getUpdateMessage } from '@/services/updateService';
 
-const TIME_OPTIONS = [
-  '07:00',
-  '08:00',
-  '09:00',
-  '10:00',
-  '12:00',
-  '18:00',
-  '20:00',
-];
+const TIME_OPTIONS = ['07:00', '08:00', '09:00', '10:00', '12:00', '18:00', '20:00'];
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
@@ -78,9 +67,7 @@ export default function SettingsScreen() {
 
   const handleNotificationToggle = async (enabled: boolean) => {
     if (enabled) {
-      const identifier = await scheduleDailyNotification(
-        settings.notificationTime
-      );
+      const identifier = await scheduleDailyNotification(settings.notificationTime);
       if (identifier) {
         updateSettings({ ...settings, notificationsEnabled: true });
       } else {
@@ -110,9 +97,7 @@ export default function SettingsScreen() {
     setDevGranting(false);
     Alert.alert(
       success ? 'Premium aktiviert' : 'Fehler',
-      success
-        ? 'Dev-Premium wurde aktiviert.'
-        : 'Premium konnte nicht aktiviert werden.'
+      success ? 'Dev-Premium wurde aktiviert.' : 'Premium konnte nicht aktiviert werden.'
     );
   };
 
@@ -125,10 +110,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.container}
-    >
+    <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Einstellungen</Text>
         {saving && <Text style={styles.savingText}>Speichern...</Text>}
@@ -208,10 +190,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Tägliche Erinnerung</Text>
         <View style={styles.toggleRow}>
           <Text style={styles.toggleLabel}>Benachrichtigung aktivieren</Text>
-          <Switch
-            value={settings.notificationsEnabled}
-            onValueChange={handleNotificationToggle}
-          />
+          <Switch value={settings.notificationsEnabled} onValueChange={handleNotificationToggle} />
         </View>
 
         {settings.notificationsEnabled && (
@@ -223,16 +202,14 @@ export default function SettingsScreen() {
                   key={time}
                   style={[
                     styles.timeButton,
-                    settings.notificationTime === time &&
-                      styles.timeButtonSelected,
+                    settings.notificationTime === time && styles.timeButtonSelected,
                   ]}
                   onPress={() => handleTimeChange(time)}
                 >
                   <Text
                     style={[
                       styles.timeButtonText,
-                      settings.notificationTime === time &&
-                        styles.timeButtonTextSelected,
+                      settings.notificationTime === time && styles.timeButtonTextSelected,
                     ]}
                   >
                     {time}
@@ -269,21 +246,15 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Über die App</Text>
         <View style={styles.aboutRow}>
           <Text style={styles.aboutLabel}>Version</Text>
-          <Text style={styles.aboutValue}>
-            {Constants.expoConfig?.version ?? '?'}
-          </Text>
+          <Text style={styles.aboutValue}>{Constants.expoConfig?.version ?? '?'}</Text>
         </View>
         <View style={styles.aboutRow}>
           <Text style={styles.aboutLabel}>Update-ID</Text>
-          <Text style={styles.aboutValue}>
-            {Updates.updateId?.slice(0, 7) ?? 'dev'}
-          </Text>
+          <Text style={styles.aboutValue}>{Updates.updateId?.slice(0, 7) ?? 'dev'}</Text>
         </View>
         <View style={styles.aboutRow}>
           <Text style={styles.aboutLabel}>Channel</Text>
-          <Text style={styles.aboutValue}>
-            {Updates.channel ?? 'development'}
-          </Text>
+          <Text style={styles.aboutValue}>{Updates.channel ?? 'development'}</Text>
         </View>
         <View style={styles.aboutRow}>
           <Text style={styles.aboutLabel}>Erstellt</Text>
@@ -299,10 +270,7 @@ export default function SettingsScreen() {
         </View>
         <View style={[styles.aboutRow, { borderBottomWidth: 0 }]}>
           <Text style={styles.aboutLabel}>Nachricht</Text>
-          <Text
-            style={[styles.aboutValue, { flex: 1, textAlign: 'right' }]}
-            numberOfLines={2}
-          >
+          <Text style={[styles.aboutValue, { flex: 1, textAlign: 'right' }]} numberOfLines={2}>
             {getUpdateMessage()}
           </Text>
         </View>
@@ -322,18 +290,10 @@ function FrequencyButton({
 }) {
   return (
     <TouchableOpacity
-      style={[
-        styles.frequencyButton,
-        selected && styles.frequencyButtonSelected,
-      ]}
+      style={[styles.frequencyButton, selected && styles.frequencyButtonSelected]}
       onPress={onPress}
     >
-      <Text
-        style={[
-          styles.frequencyButtonText,
-          selected && styles.frequencyButtonTextSelected,
-        ]}
-      >
+      <Text style={[styles.frequencyButtonText, selected && styles.frequencyButtonTextSelected]}>
         {label}
       </Text>
     </TouchableOpacity>
