@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet } from 'react-native';
 
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { useDailyRefresh } from '@/hooks/useDailyRefresh';
@@ -92,6 +94,21 @@ export default function HomeScreen() {
     loadWords();
   };
 
+  const renderItem = useCallback(
+    ({ item, index }: { item: Wort; index: number }) => (
+      <WordCard
+        word={item}
+        enriched={enrichedMap[item.id]}
+        aiLoading={isPremium && aiLoading}
+        aiError={isPremium && aiError}
+        index={index}
+      />
+    ),
+    [enrichedMap, isPremium, aiLoading, aiError]
+  );
+
+  const keyExtractor = useCallback((item: Wort) => item.id.toString(), []);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -107,49 +124,36 @@ export default function HomeScreen() {
   }
 
   if (error) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
+    return <ErrorState message={error} onRetry={loadWords} />;
   }
 
+  const ListHeader = (
+    <View style={styles.header}>
+      <Text style={styles.title}>Wörter des Tages</Text>
+      <Text style={styles.subtitle}>
+        {new Date().toLocaleDateString('de-DE', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })}
+      </Text>
+    </View>
+  );
+
+  const ListEmpty = <EmptyState />;
+
   return (
-    <ScrollView
+    <FlatList
+      data={words}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      ListHeaderComponent={ListHeader}
+      ListEmptyComponent={ListEmpty}
       style={styles.scrollView}
       contentContainerStyle={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Wörter des Tages</Text>
-        <Text style={styles.subtitle}>
-          {new Date().toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Text>
-      </View>
-
-      {words.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Keine Wörter für heute gefunden.</Text>
-        </View>
-      ) : (
-        <View style={styles.wordsList}>
-          {words.map((word) => (
-            <WordCard
-              key={word.id}
-              word={word}
-              enriched={enrichedMap[word.id]}
-              aiLoading={isPremium && aiLoading}
-              aiError={isPremium && aiError}
-            />
-          ))}
-        </View>
-      )}
-    </ScrollView>
+    />
   );
 }
 
@@ -187,23 +191,5 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     opacity: 0.6,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#dc3545',
-    textAlign: 'center',
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  emptyText: {
-    fontSize: 16,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-  wordsList: {
-    backgroundColor: 'transparent',
   },
 });

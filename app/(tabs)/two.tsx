@@ -13,6 +13,8 @@ import Slider from '@react-native-community/slider';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 
+import { Button } from '@/components/Button';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { Text, View } from '@/components/Themed';
 import {
   cancelAllNotifications,
@@ -190,8 +192,7 @@ export default function SettingsScreen() {
       </View>
 
       {/* Anzahl der Wörter */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Anzahl der täglichen Wörter</Text>
+      <CollapsibleSection title="Worteinstellungen" defaultExpanded>
         <View style={styles.sliderContainer}>
           <Slider
             style={styles.slider}
@@ -206,21 +207,20 @@ export default function SettingsScreen() {
           <Text style={styles.sliderValue}>{settings.wordCount}</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
+        <Button
+          variant="secondary"
           onPress={handleRefreshWords}
+          title={refreshingWords ? 'Aktualisiere...' : 'Neue Wörter generieren'}
+          loading={refreshingWords}
           disabled={refreshingWords}
-        >
-          <Text style={styles.secondaryButtonText}>
-            {refreshingWords ? 'Aktualisiere...' : 'Neue Wörter generieren'}
-          </Text>
-        </TouchableOpacity>
+          icon="refresh-outline"
+          accessibilityLabel="Neue Wörter generieren"
+          accessibilityHint="Setzt die aktuellen Wörter zurück und generiert neue"
+        />
         <Text style={styles.sectionHint}>Setzt die aktuellen Wörter zurück und generiert neue</Text>
-      </View>
 
-      {/* Wortarten */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Wortarten</Text>
+        {/* Wortarten */}
+        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Wortarten</Text>
         <View style={styles.toggleRow}>
           <Text style={styles.toggleLabel}>Substantive</Text>
           <Switch
@@ -242,11 +242,9 @@ export default function SettingsScreen() {
             onValueChange={() => handleWordTypeToggle('adjektiv')}
           />
         </View>
-      </View>
 
-      {/* Frequenzklasse */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Schwierigkeitsgrad</Text>
+        {/* Frequenzklasse */}
+        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Schwierigkeitsgrad</Text>
         <Text style={styles.sectionHint}>
           Seltene Wörter sind schwieriger, häufige Wörter einfacher
         </Text>
@@ -267,12 +265,11 @@ export default function SettingsScreen() {
             onPress={() => handleFrequencyChange('haeufig')}
           />
         </View>
-      </View>
+      </CollapsibleSection>
 
       {/* Benachrichtigungen - nur außerhalb von Expo Go anzeigen */}
       {!isExpoGo() && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tägliche Erinnerung</Text>
+        <CollapsibleSection title="Benachrichtigungen">
           <View style={styles.toggleRow}>
             <Text style={styles.toggleLabel}>Benachrichtigung aktivieren</Text>
             <Switch
@@ -308,16 +305,16 @@ export default function SettingsScreen() {
             </View>
           )}
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
+          <Button
+            variant="secondary"
             onPress={handleTestNotification}
+            title={testingNotification ? 'Sende...' : 'Testbenachrichtigung senden'}
+            loading={testingNotification}
             disabled={testingNotification}
-          >
-            <Text style={styles.secondaryButtonText}>
-              {testingNotification ? 'Sende...' : 'Testbenachrichtigung senden'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            icon="notifications-outline"
+            accessibilityLabel="Testbenachrichtigung senden"
+          />
+        </CollapsibleSection>
       )}
 
       {/* TODO (Play Store Release) #60: Hide this section in production builds
@@ -327,22 +324,20 @@ export default function SettingsScreen() {
           - Add revokePremium() to premiumService.ts that clears the entitlement
           - Useful for verifying PaywallTeaser works correctly
       */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Premium (Dev)</Text>
-        <TouchableOpacity
-          style={styles.devButton}
+      <CollapsibleSection title="Premium (Dev)">
+        <Button
+          variant="primary"
           onPress={handleDevPremium}
+          title={devGranting ? 'Aktiviere...' : 'Premium aktivieren (Dev)'}
+          loading={devGranting}
           disabled={devGranting}
-        >
-          <Text style={styles.devButtonText}>
-            {devGranting ? 'Aktiviere...' : 'Premium aktivieren (Dev)'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          icon="star-outline"
+          accessibilityLabel="Premium für Entwicklung aktivieren"
+        />
+      </CollapsibleSection>
 
       {/* Über die App */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Über die App</Text>
+      <CollapsibleSection title="Über die App">
         <View style={styles.aboutRow}>
           <Text style={styles.aboutLabel}>Version</Text>
           <Text style={styles.aboutValue}>{Constants.expoConfig?.version ?? '?'}</Text>
@@ -373,7 +368,7 @@ export default function SettingsScreen() {
             {getUpdateMessage()}
           </Text>
         </View>
-      </View>
+      </CollapsibleSection>
     </ScrollView>
   );
 }
@@ -541,32 +536,5 @@ const styles = StyleSheet.create({
   aboutValue: {
     fontSize: 16,
     opacity: 0.6,
-  },
-  devButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#007AFF',
-    alignItems: 'center',
-  },
-  devButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    alignItems: 'center',
-    marginTop: 16,
-    backgroundColor: 'transparent',
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#007AFF',
   },
 });

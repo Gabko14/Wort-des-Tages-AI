@@ -15,3 +15,7 @@ export interface EnrichedWord {
   exampleSentence?: string;
   quiz?: Quiz;
 }
+
+export interface AiEnrichResponse {
+  enrichedWords?: EnrichedWord[];
+}
