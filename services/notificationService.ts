@@ -7,7 +7,7 @@ import { AppError } from '@/utils/appError';
 
 let didWarnExpoGo = false;
 
-function isExpoGo(): boolean {
+export function isExpoGo(): boolean {
   return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 }
 
@@ -159,6 +159,37 @@ export async function getScheduledNotifications(): Promise<NotificationRequest[]
     throw new AppError(
       'notifications_schedule_failed',
       'Benachrichtigungen konnten nicht geladen werden.',
+      err
+    );
+  }
+}
+
+export async function sendTestNotification(): Promise<boolean> {
+  try {
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) {
+      return false;
+    }
+
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return false;
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Wort des Tages',
+        body: 'Dies ist eine Testbenachrichtigung!',
+        data: { screen: 'home' },
+      },
+      trigger: null, // null means show immediately
+    });
+
+    return true;
+  } catch (err) {
+    throw new AppError(
+      'notifications_test_failed',
+      'Testbenachrichtigung konnte nicht gesendet werden.',
       err
     );
   }

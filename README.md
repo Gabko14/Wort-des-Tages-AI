@@ -115,9 +115,10 @@ npm start
 
 #### Fehlerbehandlung
 
-- `try/catch` für async Operationen
+- Services werfen typed `AppError` (`utils/appError.ts`), UI fängt ab und zeigt Fallback/Meldung
+- Promises immer behandeln: `await` + `try/catch` oder `.catch()` bei "fire-and-forget"
+- Render-Fehler: Expo Router `ErrorBoundary` in `app/_layout.tsx`
 - `console.error()` für Fehler-Logging
-- Error & Loading States in Komponenten
 
 ## 📦 Deployment
 

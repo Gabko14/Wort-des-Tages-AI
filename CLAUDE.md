@@ -45,15 +45,28 @@ npm run type-check # TypeScript validation
 - `database.ts` - Singleton SQLite connection, `Wort` and `WortDesTages` types
 - `wordService.ts` - Daily word generation with settings-based filtering
 - `settingsService.ts` - AsyncStorage-backed user preferences
-- `premiumService.ts` - Premium status checking via Supabase, cached locally
-- `aiService.ts` - AI word enrichment with caching and retry logic
+- `premiumService.ts` - Premium status checking via Supabase (throws on failure), cached locally
+- `aiService.ts` - AI word enrichment with caching/retry (throws on failure)
 
 ### Premium/AI System
 
 - Device-based entitlements stored in Supabase `entitlements` table
 - `ai-enrich` Edge Function calls OpenAI (gpt-4o-mini) for word definitions
-- Premium check falls back to cached status on network failure
+- Services throw typed `AppError` on failures; UI decides fallback behavior
 - AI responses cached in AsyncStorage by word IDs
+
+## Error Handling
+
+### Rule of Thumb
+
+- **Services throw, UI catches**: service functions should throw a typed `AppError` (see `utils/appError.ts`) and let screens/components decide how to recover or show messaging.
+- **Never leave promises unhandled**: use `await` + `try/catch`, or attach `.catch()` for "fire-and-forget" calls.
+- **Render-time failures**: rely on Expo Router's error boundary (`app/_layout.tsx`) as a last-resort recovery screen.
+
+### Supabase Config Behavior
+
+- In development (`__DEV__`), missing `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` throws at startup.
+- In production builds, missing Supabase config disables premium/AI features (app should still run offline for the local word database).
 
 ## Code Patterns
 

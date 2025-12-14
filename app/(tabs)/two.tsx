@@ -14,7 +14,12 @@ import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 
 import { Text, View } from '@/components/Themed';
-import { cancelAllNotifications, scheduleDailyNotification } from '@/services/notificationService';
+import {
+  cancelAllNotifications,
+  isExpoGo,
+  scheduleDailyNotification,
+  sendTestNotification,
+} from '@/services/notificationService';
 import { grantPremium } from '@/services/premiumService';
 import {
   AppSettings,
@@ -24,6 +29,7 @@ import {
   saveSettings,
 } from '@/services/settingsService';
 import { getUpdateMessage } from '@/services/updateService';
+import { clearTodaysWords } from '@/services/wordService';
 
 const TIME_OPTIONS = ['07:00', '08:00', '09:00', '10:00', '12:00', '18:00', '20:00'];
 
@@ -32,6 +38,8 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [devGranting, setDevGranting] = useState(false);
+  const [testingNotification, setTestingNotification] = useState(false);
+  const [refreshingWords, setRefreshingWords] = useState(false);
 
   useEffect(() => {
     loadSettings()
@@ -134,6 +142,38 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleTestNotification = async () => {
+    setTestingNotification(true);
+    let success = false;
+    try {
+      success = await sendTestNotification();
+    } catch (err) {
+      console.error('Failed to send test notification:', err);
+    }
+    setTestingNotification(false);
+    if (!success) {
+      Alert.alert(
+        'Berechtigung erforderlich',
+        'Bitte erlaube Benachrichtigungen in den Geräteeinstellungen.'
+      );
+    }
+  };
+
+  const handleRefreshWords = async () => {
+    setRefreshingWords(true);
+    try {
+      await clearTodaysWords();
+      Alert.alert(
+        'Neue Wörter',
+        'Die Wörter des Tages wurden zurückgesetzt. Gehe zur Startseite, um die neuen Wörter zu sehen.'
+      );
+    } catch (err) {
+      console.error('Failed to refresh words:', err);
+      Alert.alert('Fehler', 'Wörter konnten nicht aktualisiert werden.');
+    }
+    setRefreshingWords(false);
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -165,6 +205,17 @@ export default function SettingsScreen() {
           />
           <Text style={styles.sliderValue}>{settings.wordCount}</Text>
         </View>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={handleRefreshWords}
+          disabled={refreshingWords}
+        >
+          <Text style={styles.secondaryButtonText}>
+            {refreshingWords ? 'Aktualisiere...' : 'Neue Wörter generieren'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.sectionHint}>Setzt die aktuellen Wörter zurück und generiert neue</Text>
       </View>
 
       {/* Wortarten */}
@@ -218,41 +269,56 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Benachrichtigungen */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tägliche Erinnerung</Text>
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>Benachrichtigung aktivieren</Text>
-          <Switch value={settings.notificationsEnabled} onValueChange={handleNotificationToggle} />
-        </View>
-
-        {settings.notificationsEnabled && (
-          <View style={styles.timeSection}>
-            <Text style={styles.timeSectionLabel}>Uhrzeit</Text>
-            <View style={styles.timeButtons}>
-              {TIME_OPTIONS.map((time) => (
-                <TouchableOpacity
-                  key={time}
-                  style={[
-                    styles.timeButton,
-                    settings.notificationTime === time && styles.timeButtonSelected,
-                  ]}
-                  onPress={() => handleTimeChange(time)}
-                >
-                  <Text
-                    style={[
-                      styles.timeButtonText,
-                      settings.notificationTime === time && styles.timeButtonTextSelected,
-                    ]}
-                  >
-                    {time}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+      {/* Benachrichtigungen - nur außerhalb von Expo Go anzeigen */}
+      {!isExpoGo() && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tägliche Erinnerung</Text>
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleLabel}>Benachrichtigung aktivieren</Text>
+            <Switch
+              value={settings.notificationsEnabled}
+              onValueChange={handleNotificationToggle}
+            />
           </View>
-        )}
-      </View>
+
+          {settings.notificationsEnabled && (
+            <View style={styles.timeSection}>
+              <Text style={styles.timeSectionLabel}>Uhrzeit</Text>
+              <View style={styles.timeButtons}>
+                {TIME_OPTIONS.map((time) => (
+                  <TouchableOpacity
+                    key={time}
+                    style={[
+                      styles.timeButton,
+                      settings.notificationTime === time && styles.timeButtonSelected,
+                    ]}
+                    onPress={() => handleTimeChange(time)}
+                  >
+                    <Text
+                      style={[
+                        styles.timeButtonText,
+                        settings.notificationTime === time && styles.timeButtonTextSelected,
+                      ]}
+                    >
+                      {time}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={handleTestNotification}
+            disabled={testingNotification}
+          >
+            <Text style={styles.secondaryButtonText}>
+              {testingNotification ? 'Sende...' : 'Testbenachrichtigung senden'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* TODO (Play Store Release) #60: Hide this section in production builds
           Replace with: {__DEV__ && ( <View>...</View> )}
@@ -487,5 +553,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
+  },
+  secondaryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    alignItems: 'center',
+    marginTop: 16,
+    backgroundColor: 'transparent',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#007AFF',
   },
 });

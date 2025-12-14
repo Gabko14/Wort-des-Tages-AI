@@ -89,7 +89,7 @@ Ambitionierte Personen mit guten Sprachkenntnissen, die ihren deutschen Wortscha
 | WordCard        | UI-Komponente | Einzelne Wortkarte mit Definition und Beispielsatz            |
 | wordService     | Service       | Wort-Generierung und -Speicherung                             |
 | settingsService | Service       | Laden/Speichern von Einstellungen                             |
-| premiumService  | Service       | Premium-Status prüfen und cachen                              |
+| premiumService  | Service       | Premium-Status prüfen (wirft `AppError` bei Fehlern)          |
 | aiService       | Service       | KI-Anreicherung mit Caching und Retry-Logik                   |
 | database        | Service       | SQLite-Singleton für lokale Wortdatenbank                     |
 
@@ -199,11 +199,11 @@ Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für Details.
 
 ### Externe Services
 
-| Service            | Anbieter              | Fallback                    |
-| ------------------ | --------------------- | --------------------------- |
-| AI Enrichment      | OpenAI (via Supabase) | Wörter ohne AI-Erklärung    |
-| Premium Check      | Supabase              | Gecachter Status            |
-| Push Notifications | Expo                  | Keine (Feature deaktiviert) |
+| Service            | Anbieter              | Fallback                          |
+| ------------------ | --------------------- | --------------------------------- |
+| AI Enrichment      | OpenAI (via Supabase) | Wörter ohne AI-Erklärung          |
+| Premium Check      | Supabase              | Premium deaktiviert (UI-Fallback) |
+| Push Notifications | Expo                  | Keine (Feature deaktiviert)       |
 
 ---
 
@@ -362,7 +362,7 @@ Die App verwendet **keine klassische Benutzerauthentifizierung**:
 | Szenario               | Massnahme                                                            |
 | ---------------------- | -------------------------------------------------------------------- |
 | API-Key kompromittiert | Key in Supabase Dashboard rotieren                                   |
-| Supabase-Ausfall       | App funktioniert offline mit gecachten Daten                         |
+| Supabase-Ausfall       | App funktioniert offline (Wortdatenbank), Premium/KI deaktiviert     |
 | Datenverlust           | Wortdatenbank ist in App gebündelt, Entitlements in Supabase Backups |
 
 ---

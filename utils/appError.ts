@@ -1,4 +1,5 @@
 export type AppErrorCode =
+  | 'db_clear_failed'
   | 'supabase_not_configured'
   | 'supabase_invoke_failed'
   | 'ai_enrich_failed'
@@ -7,6 +8,7 @@ export type AppErrorCode =
   | 'notifications_unavailable'
   | 'notifications_permission_failed'
   | 'notifications_schedule_failed'
+  | 'notifications_test_failed'
   | 'settings_save_failed';
 
 export class AppError extends Error {

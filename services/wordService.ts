@@ -1,3 +1,5 @@
+import { AppError } from '@/utils/appError';
+
 import { getDatabase, Wort } from './database';
 import {
   AppSettings,
@@ -120,4 +122,18 @@ export async function getOrGenerateTodaysWords(): Promise<Wort[]> {
   }
 
   return words;
+}
+
+export async function clearTodaysWords(): Promise<void> {
+  try {
+    const db = await getDatabase();
+    const today = getTodayDateString();
+    await db.runAsync('DELETE FROM wort_des_tages WHERE date = ?', [today]);
+  } catch (err) {
+    throw new AppError(
+      'db_clear_failed',
+      'Wörter des Tages konnten nicht zurückgesetzt werden.',
+      err
+    );
+  }
 }

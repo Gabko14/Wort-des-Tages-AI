@@ -148,14 +148,14 @@ return <DataList data={data} />;
 ### Async Functions with Error Handling
 
 ```typescript
-// ✅ Services are always async, use try/catch
+// ✅ Services are always async, use try/catch and throw typed AppError
 export async function getTodaysWords(): Promise<Wort[]> {
   try {
     const db = await getDatabase();
     return await db.getAllAsync<Wort>('SELECT * FROM wort WHERE ...');
   } catch (error) {
     console.error('Failed to get words:', error);
-    throw error; // Re-throw to let UI handle it
+    throw error; // Re-throw (prefer typed AppError) to let UI handle it
   }
 }
 ```
