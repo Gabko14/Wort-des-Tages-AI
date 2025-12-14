@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
@@ -24,14 +19,16 @@ export default function HomeScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
-  const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>(
-    {}
-  );
+  const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>({});
+  const [loadingMessage, setLoadingMessage] = useState('Lade Wörter des Tages...');
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
 
   const loadWords = useCallback(async () => {
     try {
       setError(null);
+      setLoadingMessage('Datenbank wird eingerichtet...');
       await initDatabase();
+      setLoadingMessage('Lade Wörter des Tages...');
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);
 
@@ -69,6 +66,18 @@ export default function HomeScreen() {
     loadWords();
   }, [loadWords]);
 
+  // Timer for loading seconds
+  useEffect(() => {
+    if (!loading) {
+      setLoadingSeconds(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [loading]);
+
   useDailyRefresh(loadWords);
 
   const onRefresh = () => {
@@ -80,7 +89,12 @@ export default function HomeScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Lade Wörter des Tages...</Text>
+        <Text style={styles.loadingText}>{loadingMessage}</Text>
+        {loadingSeconds >= 3 && (
+          <Text style={styles.loadingHint}>
+            Erste Einrichtung kann bis zu 60 Sekunden dauern... ({loadingSeconds}s)
+          </Text>
+        )}
       </View>
     );
   }
@@ -97,9 +111,7 @@ export default function HomeScreen() {
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.header}>
         <Text style={styles.title}>Wörter des Tages</Text>
@@ -163,6 +175,11 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
+  },
+  loadingHint: {
+    marginTop: 8,
+    fontSize: 14,
+    opacity: 0.6,
   },
   errorText: {
     fontSize: 16,
