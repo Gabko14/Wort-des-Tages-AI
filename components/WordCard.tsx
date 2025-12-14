@@ -1,8 +1,15 @@
-import { Alert, Linking, Pressable, StyleSheet } from 'react-native';
+import { useState } from 'react';
+
+import { Linking, Pressable, StyleSheet } from 'react-native';
+
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import { Wort } from '@/services/database';
 import { EnrichedWord } from '@/types/ai';
 
+import { Button } from './Button';
 import { QuizCard } from './QuizCard';
 import { Text, View, useThemeColor } from './Themed';
 
@@ -11,26 +18,51 @@ interface WordCardProps {
   enriched?: EnrichedWord;
   aiLoading?: boolean;
   aiError?: boolean;
+  index?: number;
 }
 
-export function WordCard({ word, enriched, aiLoading, aiError }: WordCardProps) {
+export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: WordCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const cardBackground = useThemeColor({ light: '#f8f9fa', dark: '#1a1a1a' }, 'background');
   const borderColor = useThemeColor({ light: '#e9ecef', dark: '#333' }, 'background');
   const accentColor = useThemeColor({ light: '#2f95dc', dark: '#4da6ff' }, 'tint');
   const mutedColor = useThemeColor({ light: '#6c757d', dark: '#adb5bd' }, 'text');
+  const iconColor = useThemeColor({ light: '#6c757d', dark: '#adb5bd' }, 'text');
+
+  const handleToggleExpand = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsExpanded((prev) => !prev);
+  };
 
   const handleOpenUrl = () => {
     if (word.url) {
-      void Linking.openURL(word.url).catch((err) => {
-        console.error('Failed to open URL:', err);
-        Alert.alert('Fehler', 'Link konnte nicht geöffnet werden.');
-      });
+      // Silent fail - OS handles most error cases, no good recovery action for user
+      void Linking.openURL(word.url).catch(() => {});
     }
   };
 
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: withSpring(isExpanded ? '180deg' : '0deg') }],
+  }));
+
   return (
-    <View style={[styles.card, { backgroundColor: cardBackground, borderColor: borderColor }]}>
-      <Text style={styles.lemma}>{word.lemma}</Text>
+    <Animated.View
+      entering={FadeInDown.delay(index * 100).springify()}
+      style={[styles.card, { backgroundColor: cardBackground, borderColor: borderColor }]}
+    >
+      <Pressable
+        onPress={handleToggleExpand}
+        style={styles.header}
+        accessibilityRole="button"
+        accessibilityLabel={isExpanded ? 'Details ausblenden' : 'Details anzeigen'}
+      >
+        <View style={styles.headerContent}>
+          <Text style={styles.lemma}>{word.lemma}</Text>
+          <Animated.View style={chevronStyle}>
+            <Ionicons name="chevron-down" size={24} color={iconColor} />
+          </Animated.View>
+        </View>
+      </Pressable>
       <View style={[styles.tagContainer, { backgroundColor: 'transparent' }]}>
         <View style={[styles.tag, { backgroundColor: accentColor }]}>
           <Text style={styles.tagText}>{word.wortklasse}</Text>
@@ -41,27 +73,38 @@ export function WordCard({ word, enriched, aiLoading, aiError }: WordCardProps) 
           </View>
         )}
       </View>
-      {enriched?.definition && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Definition</Text>
-          <Text style={styles.sectionText}>{enriched.definition}</Text>
-        </View>
+      {isExpanded && (
+        <>
+          {enriched?.definition && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Definition</Text>
+              <Text style={styles.sectionText}>{enriched.definition}</Text>
+            </View>
+          )}
+          {enriched?.exampleSentence && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Beispielsatz</Text>
+              <Text style={styles.sectionText}>{enriched.exampleSentence}</Text>
+            </View>
+          )}
+          {aiLoading && !enriched && <Text style={styles.sectionText}>KI lädt...</Text>}
+          {aiError && !enriched && !aiLoading && (
+            <Text style={styles.errorText}>KI nicht verfügbar</Text>
+          )}
+          {enriched?.quiz && <QuizCard quiz={enriched.quiz} />}
+          <Button
+            variant="ghost"
+            onPress={handleOpenUrl}
+            title="Im DWDS nachschlagen"
+            icon="open-outline"
+            iconPosition="right"
+            accessibilityLabel="Im DWDS Wörterbuch nachschlagen"
+            accessibilityHint="Öffnet die DWDS Webseite in einem Browser"
+            accessibilityRole="link"
+          />
+        </>
       )}
-      {enriched?.exampleSentence && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Beispielsatz</Text>
-          <Text style={styles.sectionText}>{enriched.exampleSentence}</Text>
-        </View>
-      )}
-      {aiLoading && !enriched && <Text style={styles.sectionText}>KI lädt...</Text>}
-      {aiError && !enriched && !aiLoading && (
-        <Text style={styles.errorText}>KI nicht verfügbar</Text>
-      )}
-      {enriched?.quiz && <QuizCard quiz={enriched.quiz} />}
-      <Pressable onPress={handleOpenUrl} style={styles.linkButton}>
-        <Text style={[styles.linkText, { color: accentColor }]}>Im DWDS nachschlagen →</Text>
-      </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -77,10 +120,25 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  header: {
+    marginBottom: 8,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
   lemma: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 12,
+    flex: 1,
+  },
+  expandHint: {
+    fontSize: 14,
+    opacity: 0.5,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   section: {
     marginBottom: 12,

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/config/supabase';
 import { Wort } from '@/services/database';
-import { EnrichedWord } from '@/types/ai';
+import { AiEnrichResponse, EnrichedWord } from '@/types/ai';
 import { AppError } from '@/utils/appError';
 
 import { getDeviceId } from './deviceService';
@@ -76,11 +76,12 @@ export async function enrichWords(words: Wort[]): Promise<EnrichedWord[]> {
       error = err;
     }
 
-    if (!error) {
-      const enriched = (data as any)?.enrichedWords;
+    if (!error && data) {
+      const response = data as AiEnrichResponse;
+      const enriched = response.enrichedWords;
       if (Array.isArray(enriched)) {
-        await setCache(cacheKey, enriched as EnrichedWord[]);
-        return enriched as EnrichedWord[];
+        await setCache(cacheKey, enriched);
+        return enriched;
       }
       return [];
     }

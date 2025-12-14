@@ -2,8 +2,11 @@ import { useCallback, useState } from 'react';
 
 import { Pressable, StyleSheet } from 'react-native';
 
+import * as Haptics from 'expo-haptics';
+
 import { Quiz, QuizOption } from '@/types/ai';
 
+import { Button } from './Button';
 import { Text, View, useThemeColor } from './Themed';
 
 interface QuizCardProps {
@@ -23,7 +26,8 @@ export function QuizCard({ quiz }: QuizCardProps) {
   const handleOptionPress = useCallback(
     (optionId: string) => {
       if (showResult) return;
-      setSelectedOptionId(optionId);
+      // Toggle selection: deselect if already selected, otherwise select
+      setSelectedOptionId((prev) => (prev === optionId ? null : optionId));
     },
     [showResult]
   );
@@ -31,8 +35,14 @@ export function QuizCard({ quiz }: QuizCardProps) {
   const handleSubmit = useCallback(() => {
     if (selectedOptionId) {
       setShowResult(true);
+      // Trigger haptic feedback based on correctness
+      if (selectedOptionId === quiz.correctOptionId) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     }
-  }, [selectedOptionId]);
+  }, [selectedOptionId, quiz.correctOptionId]);
 
   const handleReset = useCallback(() => {
     setSelectedOptionId(null);
@@ -101,21 +111,29 @@ export function QuizCard({ quiz }: QuizCardProps) {
       </View>
 
       {!showResult ? (
-        <Pressable
-          style={[styles.submitButton, !selectedOptionId && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={!selectedOptionId}
-        >
-          <Text style={styles.submitButtonText}>Antwort prüfen</Text>
-        </Pressable>
+        <View style={styles.submitButtonContainer}>
+          <Button
+            variant="primary"
+            onPress={handleSubmit}
+            title="Antwort prüfen"
+            disabled={!selectedOptionId}
+            accessibilityLabel="Antwort prüfen"
+            accessibilityHint="Prüft deine ausgewählte Antwort"
+          />
+        </View>
       ) : (
         <View style={styles.resultContainer}>
           <Text style={[styles.resultText, isCorrect ? styles.correctText : styles.incorrectText]}>
             {isCorrect ? '✓ Richtig!' : '✗ Leider falsch'}
           </Text>
-          <Pressable style={styles.resetButton} onPress={handleReset}>
-            <Text style={styles.resetButtonText}>Nochmal versuchen</Text>
-          </Pressable>
+          <Button
+            variant="secondary"
+            onPress={handleReset}
+            title="Nochmal versuchen"
+            icon="refresh-outline"
+            accessibilityLabel="Quiz zurücksetzen"
+            accessibilityHint="Startet das Quiz neu"
+          />
         </View>
       )}
     </View>
@@ -143,6 +161,10 @@ const styles = StyleSheet.create({
     gap: 10,
     backgroundColor: 'transparent',
   },
+  submitButtonContainer: {
+    marginTop: 16,
+    backgroundColor: 'transparent',
+  },
   option: {
     padding: 14,
     borderRadius: 8,
@@ -154,21 +176,6 @@ const styles = StyleSheet.create({
   },
   resultOptionText: {
     color: '#fff',
-    fontWeight: '600',
-  },
-  submitButton: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 8,
-    backgroundColor: '#2f95dc',
-    alignItems: 'center',
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#adb5bd',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
   },
   resultContainer: {
@@ -186,13 +193,5 @@ const styles = StyleSheet.create({
   },
   incorrectText: {
     color: '#dc3545',
-  },
-  resetButton: {
-    padding: 10,
-  },
-  resetButtonText: {
-    color: '#2f95dc',
-    fontSize: 14,
-    fontWeight: '500',
   },
 });

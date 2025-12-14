@@ -53,6 +53,8 @@ module.exports = {
       },
       plugins: ['@typescript-eslint'],
       rules: {
+        // Discourage use of `any` - prefer `unknown` with type narrowing
+        '@typescript-eslint/no-explicit-any': 'warn',
         '@typescript-eslint/naming-convention': [
           'warn',
           // Variablen: camelCase oder UPPER_CASE oder PascalCase (für Komponenten)
