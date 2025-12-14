@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { EmptyState } from '../EmptyState';
@@ -37,8 +38,8 @@ describe('EmptyState', () => {
     expect(screen.getByLabelText('Zu den Einstellungen')).toBeTruthy();
   });
 
-  it('should navigate to settings when button is pressed', async () => {
-    const { router } = await import('expo-router');
+  it('should navigate to settings when button is pressed', () => {
+    const { router } = jest.requireMock('expo-router');
     render(<EmptyState />);
 
     const button = screen.getByLabelText('Zu den Einstellungen');

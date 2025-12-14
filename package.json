@@ -15,7 +15,7 @@
     "type-check": "tsc --noEmit",
     "prepare": "husky",
     "preversion": "npm run lint && npm run type-check && npm test",
-    "postversion": "node scripts/sync-version.js && git add app.json && git commit --amend --no-edit && git push && git push --tags"
+    "postversion": "node scripts/sync-version.js && git push && git push --tags -f"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
