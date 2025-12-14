@@ -37,8 +37,8 @@ describe('EmptyState', () => {
     expect(screen.getByLabelText('Zu den Einstellungen')).toBeTruthy();
   });
 
-  it('should navigate to settings when button is pressed', () => {
-    const { router } = require('expo-router');
+  it('should navigate to settings when button is pressed', async () => {
+    const { router } = await import('expo-router');
     render(<EmptyState />);
 
     const button = screen.getByLabelText('Zu den Einstellungen');
@@ -49,9 +49,10 @@ describe('EmptyState', () => {
   });
 
   it('should render empty icon', () => {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { UNSAFE_getAllByType } = render(<EmptyState />);
 
-    const icons = UNSAFE_getAllByType(require('@expo/vector-icons').Ionicons);
+    const icons = UNSAFE_getAllByType(Ionicons);
     expect(icons.length).toBeGreaterThanOrEqual(1);
   });
 });

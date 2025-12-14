@@ -22,10 +22,12 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
-      mockListener.mockImplementation(listener);
-      return { remove: jest.fn() };
-    });
+    (AppState.addEventListener as jest.Mock).mockImplementation(
+      (_event: string, listener: (state: string) => void) => {
+        mockListener.mockImplementation(listener);
+        return { remove: jest.fn() };
+      }
+    );
 
     renderHook(() => useDailyRefresh(onNewDay));
 
@@ -41,10 +43,12 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
-      mockListener.mockImplementation(listener);
-      return { remove: jest.fn() };
-    });
+    (AppState.addEventListener as jest.Mock).mockImplementation(
+      (_event: string, listener: (state: string) => void) => {
+        mockListener.mockImplementation(listener);
+        return { remove: jest.fn() };
+      }
+    );
 
     renderHook(() => useDailyRefresh(onNewDay));
 
@@ -79,10 +83,12 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
-      mockListener.mockImplementation(listener);
-      return { remove: jest.fn() };
-    });
+    (AppState.addEventListener as jest.Mock).mockImplementation(
+      (_event: string, listener: (state: string) => void) => {
+        mockListener.mockImplementation(listener);
+        return { remove: jest.fn() };
+      }
+    );
 
     renderHook(() => useDailyRefresh(onNewDay));
 
@@ -105,10 +111,12 @@ describe('useDailyRefresh', () => {
     const onNewDay = jest.fn();
     const mockListener = jest.fn();
 
-    (AppState.addEventListener as jest.Mock).mockImplementation((_event: string, listener: any) => {
-      mockListener.mockImplementation(listener);
-      return { remove: jest.fn() };
-    });
+    (AppState.addEventListener as jest.Mock).mockImplementation(
+      (_event: string, listener: (state: string) => void) => {
+        mockListener.mockImplementation(listener);
+        return { remove: jest.fn() };
+      }
+    );
 
     renderHook(() => useDailyRefresh(onNewDay));
 
