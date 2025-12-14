@@ -3,6 +3,7 @@ import { Linking, Pressable, StyleSheet } from 'react-native';
 import { Wort } from '@/services/database';
 import { EnrichedWord } from '@/types/ai';
 
+import { QuizCard } from './QuizCard';
 import { Text, View, useThemeColor } from './Themed';
 
 interface WordCardProps {
@@ -83,6 +84,7 @@ export function WordCard({
       {aiError && !enriched && !aiLoading && (
         <Text style={styles.errorText}>KI nicht verfügbar</Text>
       )}
+      {enriched?.quiz && <QuizCard quiz={enriched.quiz} />}
       <Pressable onPress={handleOpenUrl} style={styles.linkButton}>
         <Text style={[styles.linkText, { color: accentColor }]}>
           Im DWDS nachschlagen →
