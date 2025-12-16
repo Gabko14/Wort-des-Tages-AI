@@ -12,6 +12,7 @@
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "prepare": "husky",
     "preversion": "npm run lint && npm run type-check && npm test",
