@@ -151,7 +151,7 @@ const mockWort = {
 const mockSettings = {
   wordCount: 3,
   wordTypes: { substantiv: true, verb: true, adjektiv: true },
-  frequencyRange: 'mittel',
+  frequencyRanges: ['mittel'],
   notificationsEnabled: false,
   notificationTime: '09:00',
 };

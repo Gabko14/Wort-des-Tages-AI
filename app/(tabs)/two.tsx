@@ -23,9 +23,9 @@ import { grantPremium } from '@/services/premiumService';
 import {
   AppSettings,
   DEFAULT_SETTINGS,
-  FrequencyRange,
   loadSettings,
   saveSettings,
+  FrequencyRange,
 } from '@/services/settingsService';
 import { clearTodaysWords } from '@/services/wordService';
 
@@ -96,8 +96,16 @@ export default function SettingsScreen() {
     void updateSettings({ ...settings, wordTypes: newWordTypes });
   };
 
-  const handleFrequencyChange = (range: FrequencyRange) => {
-    void updateSettings({ ...settings, frequencyRange: range });
+  const handleFrequencyToggle = (range: FrequencyRange) => {
+    const current = settings.frequencyRanges;
+    const isSelected = current.includes(range);
+
+    if (isSelected && current.length === 1) {
+      return;
+    }
+
+    const newRanges = isSelected ? current.filter((r) => r !== range) : [...current, range];
+    void updateSettings({ ...settings, frequencyRanges: newRanges });
   };
 
   const handleNotificationToggle = async (enabled: boolean) => {
@@ -303,7 +311,7 @@ export default function SettingsScreen() {
 
         {/* Frequenzklasse */}
         <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Schwierigkeitsgrad</Text>
-        <FrequencySelector value={settings.frequencyRange} onChange={handleFrequencyChange} />
+        <FrequencySelector value={settings.frequencyRanges} onToggle={handleFrequencyToggle} />
       </CollapsibleSection>
 
       {/* Benachrichtigungen - nur außerhalb von Expo Go anzeigen */}
