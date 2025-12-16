@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-type AsyncStorageModule = typeof import('@react-native-async-storage/async-storage');
+type AsyncStorageModule = typeof import('@react-native-async-storage/async-storage').default;
 type PlatformModule = { OS: string };
 
 let AsyncStorage: AsyncStorageModule;
@@ -19,7 +19,7 @@ jest.mock('react-native', () => ({
 describe('deviceService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    AsyncStorage = require('@react-native-async-storage/async-storage');
+    AsyncStorage = require('@react-native-async-storage/async-storage').default;
     const expoApplication = require('expo-application');
     getAndroidId = expoApplication.getAndroidId as jest.Mock;
     getIosIdForVendorAsync = expoApplication.getIosIdForVendorAsync as jest.Mock;
