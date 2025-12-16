@@ -1,7 +1,7 @@
-import { ColorSchemeName, StyleSheet, View } from 'react-native';
+import { ColorSchemeName, StyleSheet, Text, View } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { BaseToast, BaseToastProps, ErrorToast, InfoToast } from 'react-native-toast-message';
+import { BaseToastProps } from 'react-native-toast-message';
 
 /**
  * Custom toast configuration matching app's design system.
@@ -27,15 +27,22 @@ export const createToastConfig = (colorScheme: ColorSchemeName) => ({
       >
         <Ionicons name="checkmark-circle" size={24} color="#28a745" style={styles.icon} />
         <View style={styles.textContainer}>
-          <BaseToast
-            {...props}
-            style={styles.baseToast}
-            contentContainerStyle={styles.contentContainer}
-            text1Style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
-            text2Style={[styles.text2, { color: isDark ? '#adb5bd' : '#6c757d' }]}
-            text1NumberOfLines={2}
-            text2NumberOfLines={2}
-          />
+          {props.text1 ? (
+            <Text
+              style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
+              numberOfLines={2}
+            >
+              {props.text1}
+            </Text>
+          ) : null}
+          {props.text2 ? (
+            <Text
+              style={[styles.text2, { color: isDark ? '#adb5bd' : '#6c757d' }]}
+              numberOfLines={2}
+            >
+              {props.text2}
+            </Text>
+          ) : null}
         </View>
       </View>
     );
@@ -57,15 +64,22 @@ export const createToastConfig = (colorScheme: ColorSchemeName) => ({
       >
         <Ionicons name="alert-circle" size={24} color="#dc3545" style={styles.icon} />
         <View style={styles.textContainer}>
-          <ErrorToast
-            {...props}
-            style={styles.baseToast}
-            contentContainerStyle={styles.contentContainer}
-            text1Style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
-            text2Style={[styles.text2, { color: isDark ? '#adb5bd' : '#6c757d' }]}
-            text1NumberOfLines={2}
-            text2NumberOfLines={2}
-          />
+          {props.text1 ? (
+            <Text
+              style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
+              numberOfLines={2}
+            >
+              {props.text1}
+            </Text>
+          ) : null}
+          {props.text2 ? (
+            <Text
+              style={[styles.text2, { color: isDark ? '#adb5bd' : '#6c757d' }]}
+              numberOfLines={2}
+            >
+              {props.text2}
+            </Text>
+          ) : null}
         </View>
       </View>
     );
@@ -92,15 +106,22 @@ export const createToastConfig = (colorScheme: ColorSchemeName) => ({
           style={styles.icon}
         />
         <View style={styles.textContainer}>
-          <InfoToast
-            {...props}
-            style={styles.baseToast}
-            contentContainerStyle={styles.contentContainer}
-            text1Style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
-            text2Style={[styles.text2, { color: isDark ? '#adb5bd' : '#6c757d' }]}
-            text1NumberOfLines={2}
-            text2NumberOfLines={2}
-          />
+          {props.text1 ? (
+            <Text
+              style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
+              numberOfLines={2}
+            >
+              {props.text1}
+            </Text>
+          ) : null}
+          {props.text2 ? (
+            <Text
+              style={[styles.text2, { color: isDark ? '#adb5bd' : '#6c757d' }]}
+              numberOfLines={2}
+            >
+              {props.text2}
+            </Text>
+          ) : null}
         </View>
       </View>
     );
@@ -131,18 +152,6 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     flexShrink: 1,
-  },
-  baseToast: {
-    backgroundColor: 'transparent',
-    borderLeftWidth: 0,
-    padding: 0,
-    margin: 0,
-    height: undefined,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 0,
-    flex: 1,
   },
   text1: {
     fontSize: 16,
