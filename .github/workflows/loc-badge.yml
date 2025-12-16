@@ -1,0 +1,100 @@
+name: LOC badge
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  loc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cloc
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y cloc
+
+      - name: Generate loc.json (Shields endpoint)
+        run: |
+          set -euo pipefail
+          mkdir -p badges
+
+          # Run cloc and capture JSON output to a file
+          cloc . \
+            --json \
+            --quiet \
+            --exclude-dir=node_modules,.expo,.expo-shared,android,ios,dist,build,coverage,.git \
+            --not-match-f='(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$' \
+            > /tmp/cloc.json
+
+          # Safety check: ensure the file is non-empty and looks like JSON
+          if [ ! -s /tmp/cloc.json ]; then
+            echo "cloc produced no output. Dumping cloc version and directory listing:"
+            cloc --version || true
+            ls -la
+            exit 1
+          fi
+
+          head -c 200 /tmp/cloc.json; echo
+
+          TOTAL=$(python3 - <<'PY'
+          import json
+          with open("/tmp/cloc.json","r",encoding="utf-8") as f:
+              d=json.load(f)
+          print(d.get("SUM", {}).get("code", 0))
+          PY
+          )
+
+          cat > badges/loc.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "LOC",
+            "message": "${TOTAL}",
+            "color": "blue"
+          }
+          EOF
+
+
+      - name: Commit badge file to badges branch
+        run: |
+          set -euo pipefail
+
+          # Save the generated badge content
+          BADGE_CONTENT=$(cat badges/loc.json)
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Try to fetch the badges branch, or create an orphan branch if it doesn't exist
+          # Clean up the local badges dir first to avoid checkout conflicts
+          rm -rf badges
+
+          if git fetch origin badges:badges 2>/dev/null; then
+            git checkout badges --
+          else
+            echo "Creating new orphan branch 'badges'"
+            git checkout --orphan badges
+            git rm -rf . || true
+          fi
+
+          # Restore the badge file
+          mkdir -p badges
+          echo "$BADGE_CONTENT" > badges/loc.json
+
+          git add badges/loc.json
+
+          # Check if there are actual changes
+          if git diff --cached --quiet; then
+            echo "No changes to badge."
+            exit 0
+          fi
+
+          git commit -m "chore: update LOC badge"
+          git push origin badges
+
