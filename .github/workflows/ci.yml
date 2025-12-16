@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   validate:
     name: Validate (Lint, Test, Type Check)
@@ -31,8 +34,82 @@ jobs:
       - name: Type Check
         run: npm run type-check
 
-      - name: Run Tests
-        run: npm test
+      - name: Run Tests with Coverage
+        run: npm test -- --coverage --coverageReporters=json-summary
 
       - name: Build Web
         run: npx expo export --platform web
+
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          set -euo pipefail
+
+          # Extract coverage percentage from json-summary
+          COVERAGE=$(node -e "
+            const report = require('./coverage/coverage-summary.json');
+            const pct = report.total.lines.pct;
+            console.log(Math.round(pct));
+          ")
+
+          # Determine badge color based on coverage
+          if [ "$COVERAGE" -ge 80 ]; then
+            COLOR="brightgreen"
+          elif [ "$COVERAGE" -ge 60 ]; then
+            COLOR="yellow"
+          elif [ "$COVERAGE" -ge 40 ]; then
+            COLOR="orange"
+          else
+            COLOR="red"
+          fi
+
+          # Create badge JSON
+          mkdir -p badges
+          cat > badges/coverage.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "coverage",
+            "message": "${COVERAGE}%",
+            "color": "${COLOR}"
+          }
+          EOF
+
+          echo "Coverage: ${COVERAGE}% (color: ${COLOR})"
+
+      - name: Commit coverage badge to badges branch
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          set -euo pipefail
+
+          # Save the generated badge content
+          BADGE_CONTENT=$(cat badges/coverage.json)
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Clean up the local badges dir first to avoid checkout conflicts
+          rm -rf badges
+
+          # Try to fetch the badges branch, or create an orphan branch if it doesn't exist
+          if git fetch origin badges:badges 2>/dev/null; then
+            git checkout badges --
+          else
+            echo "Creating new orphan branch 'badges'"
+            git checkout --orphan badges
+            git rm -rf . || true
+          fi
+
+          # Restore the badge file
+          mkdir -p badges
+          echo "$BADGE_CONTENT" > badges/coverage.json
+
+          git add badges/coverage.json
+
+          # Check if there are actual changes
+          if git diff --cached --quiet; then
+            echo "No changes to coverage badge."
+            exit 0
+          fi
+
+          git commit -m "chore: update coverage badge"
+          git push origin badges

@@ -32,6 +32,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env.local
 
 # typescript
 *.tsbuildinfo
@@ -43,5 +44,5 @@ yarn-error.*
 # jetbrains
 .idea
 
-
-.env.local
+# misc
+coverage

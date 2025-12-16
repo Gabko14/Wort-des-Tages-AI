@@ -1,4 +1,4 @@
-![Coverage](https://codecov.io/gh/Gabko14/Wort-des-Tages-AI/branch/main/graph/badge.svg)
+![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Gabko14/Wort-des-Tages-AI/badges/badges/coverage.json&style=for-the-badge)
 ![AI](https://img.shields.io/badge/AI-powered-brightgreen?style=for-the-badge&logo=openai)
 ![Repo Size](https://img.shields.io/github/repo-size/Gabko14/Wort-des-Tages-AI?style=for-the-badge)
 ![LOC](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Gabko14/Wort-des-Tages-AI/badges/badges/loc.json&style=for-the-badge)
