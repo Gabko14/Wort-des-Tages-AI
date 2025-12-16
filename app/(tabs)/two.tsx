@@ -320,24 +320,19 @@ export default function SettingsScreen() {
         </CollapsibleSection>
       )}
 
-      {/* TODO (Play Store Release) #60: Hide this section in production builds
-          Replace with: {__DEV__ && ( <View>...</View> )}
-
-          Also consider adding a "Revoke Premium" button for testing:
-          - Add revokePremium() to premiumService.ts that clears the entitlement
-          - Useful for verifying PaywallTeaser works correctly
-      */}
-      <CollapsibleSection title="Premium (Dev)">
-        <Button
-          variant="primary"
-          onPress={handleDevPremium}
-          title={devGranting ? 'Aktiviere...' : 'Premium aktivieren (Dev)'}
-          loading={devGranting}
-          disabled={devGranting}
-          icon="star-outline"
-          accessibilityLabel="Premium für Entwicklung aktivieren"
-        />
-      </CollapsibleSection>
+      {__DEV__ && (
+        <CollapsibleSection title="Premium (Dev)">
+          <Button
+            variant="primary"
+            onPress={handleDevPremium}
+            title={devGranting ? 'Aktiviere...' : 'Premium aktivieren (Dev)'}
+            loading={devGranting}
+            disabled={devGranting}
+            icon="star-outline"
+            accessibilityLabel="Premium für Entwicklung aktivieren"
+          />
+        </CollapsibleSection>
+      )}
 
       {/* Über die App */}
       <CollapsibleSection title="Über die App">
