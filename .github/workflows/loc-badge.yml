@@ -2,7 +2,7 @@ name: LOC badge
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
   workflow_dispatch:
 
 permissions:
@@ -60,7 +60,6 @@ jobs:
           }
           EOF
 
-
       - name: Commit badge file to badges branch
         run: |
           set -euo pipefail
@@ -97,4 +96,3 @@ jobs:
 
           git commit -m "chore: update LOC badge"
           git push origin badges
-

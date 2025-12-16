@@ -17,10 +17,14 @@ jest.mock('@/components/useColorScheme', () => ({
   useColorScheme: jest.fn(() => 'light'),
 }));
 
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
-);
+// Mock AsyncStorage with a default export for compatibility with default imports
+const mockAsyncStorage = require('@react-native-async-storage/async-storage/jest/async-storage-mock');
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  ...mockAsyncStorage,
+  default: mockAsyncStorage,
+}));
 
 // Mock expo-notifications
 jest.mock('expo-notifications', () => ({

@@ -35,7 +35,11 @@ export async function loadSettings(): Promise<AppSettings> {
     const stored = await AsyncStorage.getItem(SETTINGS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { ...DEFAULT_SETTINGS, ...parsed };
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsed,
+        wordTypes: { ...DEFAULT_SETTINGS.wordTypes, ...parsed.wordTypes },
+      };
     }
     return DEFAULT_SETTINGS;
   } catch {

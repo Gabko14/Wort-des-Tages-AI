@@ -217,6 +217,34 @@ describe('wordService', () => {
     });
   });
 
+  describe('clearTodaysWords', () => {
+    it('should delete todays entry from the database', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2024-05-10T12:00:00Z'));
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { clearTodaysWords } = require('../wordService');
+      await clearTodaysWords();
+
+      expect(mockDb.runAsync).toHaveBeenCalledWith('DELETE FROM wort_des_tages WHERE date = ?', [
+        '2024-05-10',
+      ]);
+
+      jest.useRealTimers();
+    });
+
+    it('should wrap deletion errors in an AppError', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2024-05-11T12:00:00Z'));
+      mockDb.runAsync.mockRejectedValueOnce(new Error('db failure'));
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { clearTodaysWords } = require('../wordService');
+
+      await expect(clearTodaysWords()).rejects.toMatchObject({ code: 'db_clear_failed' });
+
+      jest.useRealTimers();
+    });
+  });
+
   describe('getOrGenerateTodaysWords', () => {
     it('should return existing words if available', async () => {
       mockDb.getFirstAsync.mockResolvedValueOnce({

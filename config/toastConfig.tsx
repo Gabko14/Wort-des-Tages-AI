@@ -28,10 +28,7 @@ export const createToastConfig = (colorScheme: ColorSchemeName) => ({
         <Ionicons name="checkmark-circle" size={24} color="#28a745" style={styles.icon} />
         <View style={styles.textContainer}>
           {props.text1 ? (
-            <Text
-              style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
-              numberOfLines={2}
-            >
+            <Text style={[styles.text1, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
               {props.text1}
             </Text>
           ) : null}
@@ -65,10 +62,7 @@ export const createToastConfig = (colorScheme: ColorSchemeName) => ({
         <Ionicons name="alert-circle" size={24} color="#dc3545" style={styles.icon} />
         <View style={styles.textContainer}>
           {props.text1 ? (
-            <Text
-              style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
-              numberOfLines={2}
-            >
+            <Text style={[styles.text1, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
               {props.text1}
             </Text>
           ) : null}
@@ -107,10 +101,7 @@ export const createToastConfig = (colorScheme: ColorSchemeName) => ({
         />
         <View style={styles.textContainer}>
           {props.text1 ? (
-            <Text
-              style={[styles.text1, { color: isDark ? '#fff' : '#000' }]}
-              numberOfLines={2}
-            >
+            <Text style={[styles.text1, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
               {props.text1}
             </Text>
           ) : null}
