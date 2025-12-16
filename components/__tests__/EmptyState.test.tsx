@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { router } from 'expo-router';
 
 import { EmptyState } from '../EmptyState';
 
