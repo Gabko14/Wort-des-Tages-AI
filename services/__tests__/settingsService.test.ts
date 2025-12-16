@@ -32,7 +32,7 @@ describe('settingsService', () => {
       expect(settings.wordCount).toBe(5);
       expect(settings.wordTypes.substantiv).toBe(true);
       expect(settings.wordTypes.verb).toBe(false);
-      expect(settings.frequencyRange).toBe(DEFAULT_SETTINGS.frequencyRange);
+      expect(settings.frequencyRanges).toEqual(DEFAULT_SETTINGS.frequencyRanges);
     });
 
     it('should fall back to defaults when parsing fails', async () => {
@@ -41,6 +41,16 @@ describe('settingsService', () => {
       const settings = await loadSettings();
 
       expect(settings).toEqual(DEFAULT_SETTINGS);
+    });
+
+    it('should migrate old frequencyRange (singular) to frequencyRanges (array)', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ frequencyRange: 'selten' })
+      );
+
+      const settings = await loadSettings();
+
+      expect(settings.frequencyRanges).toEqual(['selten']);
     });
   });
 
@@ -64,10 +74,28 @@ describe('settingsService', () => {
   });
 
   describe('getFrequencyClasses', () => {
-    it('should map ranges to class lists', () => {
-      expect(getFrequencyClasses('selten')).toEqual(['0', '1']);
-      expect(getFrequencyClasses('mittel')).toEqual(['2', '3']);
-      expect(getFrequencyClasses('haeufig')).toEqual(['4', '5', '6']);
+    it('should map single range to class list', () => {
+      expect(getFrequencyClasses(['selten'])).toEqual(['0', '1']);
+      expect(getFrequencyClasses(['mittel'])).toEqual(['2', '3']);
+      expect(getFrequencyClasses(['haeufig'])).toEqual(['4', '5', '6']);
+    });
+
+    it('should combine multiple ranges into unified class list', () => {
+      const result = getFrequencyClasses(['selten', 'mittel']);
+      expect(result).toContain('0');
+      expect(result).toContain('1');
+      expect(result).toContain('2');
+      expect(result).toContain('3');
+      expect(result).toHaveLength(4);
+    });
+
+    it('should handle all ranges selected', () => {
+      const result = getFrequencyClasses(['selten', 'mittel', 'haeufig']);
+      expect(result).toHaveLength(7);
+    });
+
+    it('should return empty array for empty input', () => {
+      expect(getFrequencyClasses([])).toEqual([]);
     });
   });
 

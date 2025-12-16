@@ -4,29 +4,29 @@ import { Text, View } from '@/components/Themed';
 import { FrequencyRange } from '@/services/settingsService';
 
 interface FrequencySelectorProps {
-  value: FrequencyRange;
-  onChange: (range: FrequencyRange) => void;
+  value: FrequencyRange[];
+  onToggle: (range: FrequencyRange) => void;
 }
 
-export function FrequencySelector({ value, onChange }: FrequencySelectorProps) {
+export function FrequencySelector({ value, onToggle }: FrequencySelectorProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.hint}>Seltene Wörter sind schwieriger, häufige Wörter einfacher</Text>
       <View style={styles.buttons}>
         <FrequencyButton
           label="Selten"
-          selected={value === 'selten'}
-          onPress={() => onChange('selten')}
+          selected={value.includes('selten')}
+          onPress={() => onToggle('selten')}
         />
         <FrequencyButton
           label="Mittel"
-          selected={value === 'mittel'}
-          onPress={() => onChange('mittel')}
+          selected={value.includes('mittel')}
+          onPress={() => onToggle('mittel')}
         />
         <FrequencyButton
           label="Häufig"
-          selected={value === 'haeufig'}
-          onPress={() => onChange('haeufig')}
+          selected={value.includes('haeufig')}
+          onPress={() => onToggle('haeufig')}
         />
       </View>
     </View>
