@@ -147,38 +147,219 @@ Die folgende Matrix ordnet jedes Akzeptanzkriterium einem oder mehreren Testfäl
 
 ## 5. Testfälle
 
-### Unit Tests - wordService
+### Unit Tests - wordService (17 Tests)
 
-| ID    | Testfall                             | Erwartetes Ergebnis           |
-| ----- | ------------------------------------ | ----------------------------- |
-| WS-01 | Keine Wörter für heute vorhanden     | Leeres Array zurückgeben      |
-| WS-02 | Wörter für heute existieren          | Wörter aus DB laden           |
-| WS-03 | Gemischte Word-IDs (valid + 0)       | Nur valide IDs laden          |
-| WS-04 | Zufällige Wörter mit Filtern         | Gefilterte Wörter zurückgeben |
-| WS-05 | Keine Worttypen ausgewählt           | Leeres Array zurückgeben      |
-| WS-06 | Wörter speichern mit Padding         | IDs mit Nullen auffüllen      |
-| WS-07 | Mehr als 5 Wörter speichern          | Auf 5 Wörter kürzen           |
-| WS-08 | Neue Wörter generieren nach Settings | Settings werden angewendet    |
+| ID    | Testfall                                       | Erwartetes Ergebnis           |
+| ----- | ---------------------------------------------- | ----------------------------- |
+| WS-01 | Keine Wörter für heute vorhanden               | Leeres Array zurückgeben      |
+| WS-02 | Wörter für heute existieren                    | Wörter aus DB laden           |
+| WS-03 | Alle Word-IDs sind 0                           | Leeres Array zurückgeben      |
+| WS-04 | Gemischte Word-IDs (valid + 0)                 | Nur valide IDs laden          |
+| WS-05 | Zufällige Wörter mit Filtern                   | Gefilterte Wörter zurückgeben |
+| WS-06 | Filter nach Worttypen und Frequenzklassen      | Korrekte SQL-Query            |
+| WS-07 | Keine Worttypen ausgewählt                     | Leeres Array zurückgeben      |
+| WS-08 | Keine Frequenzklassen ausgewählt               | Leeres Array zurückgeben      |
+| WS-09 | Keine Wörter verfügbar                         | Leeres Array zurückgeben      |
+| WS-10 | Wörter speichern mit Padding                   | IDs mit Nullen auffüllen      |
+| WS-11 | Mehr als 5 Wörter speichern                    | Auf 5 Wörter kürzen           |
+| WS-12 | Heutigen Eintrag löschen                       | DELETE Query ausgeführt       |
+| WS-13 | Löschen mit Fehler                             | AppError mit db_clear_failed  |
+| WS-14 | getOrGenerateTodaysWords mit vorhandenen Daten | Existierende Wörter laden     |
+| WS-15 | getOrGenerateTodaysWords ohne Daten            | Neue Wörter generieren        |
+| WS-16 | Wortanzahl aus Settings verwenden              | Settings-Wert anwenden        |
+| WS-17 | Keine generierbaren Wörter                     | Leeres Array, kein Speichern  |
 
-### Unit Tests - WordCard
+### Unit Tests - settingsService (12 Tests)
 
-| ID    | Testfall                 | Erwartetes Ergebnis     |
-| ----- | ------------------------ | ----------------------- |
-| WC-01 | URL vorhanden            | Link-Button anzeigen    |
-| WC-02 | URL leer                 | Link-Button verstecken  |
-| WC-03 | Frequenzklasse "n/a"     | Frequenz nicht anzeigen |
-| WC-04 | Gültige Frequenzklasse   | Frequenz anzeigen       |
-| WC-05 | Verschiedene Wortklassen | Korrektes Tag anzeigen  |
+| ID    | Testfall                                   | Erwartetes Ergebnis             |
+| ----- | ------------------------------------------ | ------------------------------- |
+| SS-01 | Keine Settings gespeichert                 | Default-Settings zurückgeben    |
+| SS-02 | Settings mit Defaults mergen               | Partial merge funktioniert      |
+| SS-03 | Ungültiges JSON                            | Fallback zu Defaults            |
+| SS-04 | Migration von frequencyRange (singular)    | Zu frequencyRanges (array)      |
+| SS-05 | Settings speichern                         | AsyncStorage.setItem aufgerufen |
+| SS-06 | Speichern fehlgeschlagen                   | AppError settings_save_failed   |
+| SS-07 | getFrequencyClasses für "selten"           | ['0', '1'] zurückgeben          |
+| SS-08 | getFrequencyClasses für "mittel"           | ['2', '3'] zurückgeben          |
+| SS-09 | getFrequencyClasses für "haeufig"          | ['4', '5', '6'] zurückgeben     |
+| SS-10 | getFrequencyClasses für mehrere Bereiche   | Kombinierte Liste               |
+| SS-11 | getFrequencyClasses für leeren Input       | Leeres Array                    |
+| SS-12 | getSelectedWordTypes mit aktivierten Typen | Nur aktivierte Typen            |
 
-### Integration Tests
+### Unit Tests - deviceService (4 Tests)
 
-| ID    | Testfall                                    | Erwartetes Ergebnis                |
-| ----- | ------------------------------------------- | ---------------------------------- |
-| IT-01 | Wortanzahl 1-5 unterstützt                  | Alle Werte funktionieren           |
-| IT-02 | Datumsvergleich für tägliche Aktualisierung | Unterschiedliche Tage erkannt      |
-| IT-03 | Settings-Defaults bei fehlenden Daten       | Standardwerte angewendet           |
-| IT-04 | Wortfilterung nach Typ und Frequenz         | Korrekte Filterung                 |
-| IT-05 | Supabase Edge Functions erreichbar          | Erfolgreiche Verbindung zu Backend |
+| ID    | Testfall                            | Erwartetes Ergebnis         |
+| ----- | ----------------------------------- | --------------------------- |
+| DS-01 | Gecachte ID ohne Storage-Zugriff    | Cache wird verwendet        |
+| DS-02 | Android-ID generieren und speichern | ID wird persistiert         |
+| DS-03 | iOS Vendor ID verwenden             | iOS-spezifische ID          |
+| DS-04 | Fallback bei nativen Fehlern        | Generierte ID mit Timestamp |
+
+### Unit Tests - updateService (3 Tests)
+
+| ID    | Testfall                           | Erwartetes Ergebnis    |
+| ----- | ---------------------------------- | ---------------------- |
+| US-01 | Nested Update-Message aus Manifest | Deep message bevorzugt |
+| US-02 | Fallback zu Top-Level Message      | Top level message      |
+| US-03 | Komplette Update-Info mit Defaults | Alle Felder korrekt    |
+
+### Unit Tests - database (17 Tests)
+
+| ID    | Testfall                          | Erwartetes Ergebnis      |
+| ----- | --------------------------------- | ------------------------ |
+| DB-01 | Wort Interface Properties         | Alle Felder vorhanden    |
+| DB-02 | Wort Typ-Validierung              | Korrekte Typen           |
+| DB-03 | WortDesTages Interface Properties | Alle FK-Felder vorhanden |
+| DB-04 | FK-Felder erlauben 0-Werte        | Null-Wörter möglich      |
+| DB-05 | UserSettings Properties           | id und anzahl_woerter    |
+| DB-06 | Verschiedene Wortanzahlen         | 1-5 unterstützt          |
+| DB-07 | Positive anzahl_woerter           | Validierung funktioniert |
+| DB-08 | Datenbank-Name korrekt            | dwds.db                  |
+| DB-09 | Datenbank-Dateiendung             | .db Extension            |
+| DB-10 | Word-IDs positiv oder 0           | Validierung funktioniert |
+| DB-11 | Datumsformat YYYY-MM-DD           | Regex-Validierung        |
+| DB-12 | Ungültige Datumsformate           | Werden abgelehnt         |
+| DB-13 | Gültige Wortklassen               | String-Validierung       |
+| DB-14 | Gültige Frequenzklassen           | 1-5 und n/a              |
+
+### Unit Tests - WordCard (22 Tests)
+
+| ID    | Testfall                      | Erwartetes Ergebnis     |
+| ----- | ----------------------------- | ----------------------- |
+| WC-01 | URL vorhanden                 | Link-Button anzeigen    |
+| WC-02 | URL leer                      | Link-Button verstecken  |
+| WC-03 | URL null                      | Falsy erkannt           |
+| WC-04 | Verschiedene URL-Typen        | Korrekte Erkennung      |
+| WC-05 | Wort-Struktur validieren      | Alle Felder vorhanden   |
+| WC-06 | Frequenzklasse "n/a"          | Frequenz nicht anzeigen |
+| WC-07 | Gültige Frequenzklasse        | Frequenz anzeigen       |
+| WC-08 | Frequenz-Anzeigelogik         | Korrekte Entscheidung   |
+| WC-09 | Frequenz-Formatierung         | "Frequenz: X" Format    |
+| WC-10 | Alle Display-Felder vorhanden | lemma, wortklasse       |
+| WC-11 | Wortklassen-Anzeige           | Korrekt angezeigt       |
+| WC-12 | Lemma-Anzeige                 | Korrekter Text          |
+| WC-13 | Multiple Wortklassen          | Adjektiv, Verb, etc.    |
+| WC-14 | Multiple Frequenzklassen      | 1-5 unterstützt         |
+| WC-15 | URL-Check vor Öffnen          | canOpenUrl Funktion     |
+| WC-16 | Link-Text vorhanden           | DWDS Referenz           |
+| WC-17 | Verschiedene Worttypen        | Properties konsistent   |
+| WC-18 | Lemma-Formatierung            | Nicht-leerer String     |
+| WC-19 | Wortklassen-Tag               | String vorhanden        |
+| WC-20 | Frequenz mit Label            | Formatierung korrekt    |
+| WC-21 | Properties erhalten           | Keine Datenverluste     |
+
+### Unit Tests - QuizCard (17 Tests)
+
+| ID    | Testfall                        | Erwartetes Ergebnis             |
+| ----- | ------------------------------- | ------------------------------- |
+| QC-01 | Quiz-Frage validieren           | Nicht-leerer String             |
+| QC-02 | Genau 4 Optionen                | Array-Länge 4                   |
+| QC-03 | Eindeutige Option-IDs           | Keine Duplikate                 |
+| QC-04 | Gültige korrekte Option-ID      | In Options enthalten            |
+| QC-05 | Nicht-leere Option-Texte        | Alle Texte vorhanden            |
+| QC-06 | Korrekte Antwort erkennen       | true bei Übereinstimmung        |
+| QC-07 | Falsche Antworten erkennen      | false bei Nicht-Übereinstimmung |
+| QC-08 | Verschiedene korrekte Antworten | Flexibles correctOptionId       |
+| QC-09 | Option-Auswahl erkennen         | isSelected Funktion             |
+| QC-10 | Null-Auswahl behandeln          | Keine Option ausgewählt         |
+| QC-11 | Korrektes Ergebnis-Message      | "✓ Richtig!"                    |
+| QC-12 | Falsches Ergebnis-Message       | "✗ Leider falsch"               |
+| QC-13 | Korrekte Option hervorheben     | isCorrectOption                 |
+| QC-14 | Falsch gewählte Option          | isIncorrectlySelected           |
+| QC-15 | Submit ohne Auswahl deaktiviert | canSubmit false                 |
+| QC-16 | Nach Ergebnis keine Änderung    | canChangeSelection false        |
+| QC-17 | Reset-Funktionalität            | Zustand zurücksetzen            |
+
+### Unit Tests - Button (7 Tests)
+
+| ID    | Testfall                   | Erwartetes Ergebnis      |
+| ----- | -------------------------- | ------------------------ |
+| BT-01 | Button mit Titel rendern   | Text sichtbar            |
+| BT-02 | onPress aufrufen           | Callback ausgeführt      |
+| BT-03 | Disabled Button            | onPress nicht aufgerufen |
+| BT-04 | Loading State              | Kein Crash               |
+| BT-05 | Alle Varianten rendern     | primary, secondary, etc. |
+| BT-06 | Button mit Icon            | Icon angezeigt           |
+| BT-07 | Custom Accessibility Label | Label korrekt            |
+
+### Unit Tests - EmptyState (5 Tests)
+
+| ID    | Testfall                 | Erwartetes Ergebnis      |
+| ----- | ------------------------ | ------------------------ |
+| ES-01 | Default Message rendern  | "Keine Wörter verfügbar" |
+| ES-02 | Custom Message rendern   | Benutzerdefinierter Text |
+| ES-03 | Settings Button anzeigen | Button vorhanden         |
+| ES-04 | Navigation zu Settings   | router.push aufgerufen   |
+| ES-05 | Empty Icon anzeigen      | Ionicons gerendert       |
+
+### Unit Tests - ErrorState (4 Tests)
+
+| ID    | Testfall              | Erwartetes Ergebnis |
+| ----- | --------------------- | ------------------- |
+| ER-01 | Fehlermeldung rendern | Message angezeigt   |
+| ER-02 | Retry Button anzeigen | Button vorhanden    |
+| ER-03 | onRetry aufrufen      | Callback ausgeführt |
+| ER-04 | Error Icon anzeigen   | Ionicons gerendert  |
+
+### Unit Tests - useDailyRefresh Hook (5 Tests)
+
+| ID    | Testfall                        | Erwartetes Ergebnis       |
+| ----- | ------------------------------- | ------------------------- |
+| DR-01 | onNewDay bei neuem Tag          | Callback aufgerufen       |
+| DR-02 | Kein Aufruf am selben Tag       | Callback nicht aufgerufen |
+| DR-03 | AppState Listener Setup/Cleanup | Korrekte Registrierung    |
+| DR-04 | State-Transitions behandeln     | inactive -> active        |
+| DR-05 | Background zu Active            | Korrekte Erkennung        |
+
+### Unit Tests - appError (3 Tests)
+
+| ID    | Testfall                           | Erwartetes Ergebnis     |
+| ----- | ---------------------------------- | ----------------------- |
+| AE-01 | AppError mit Code und Message      | Properties erhalten     |
+| AE-02 | Unknown Errors wrappen             | Fallback Code verwendet |
+| AE-03 | Existierenden AppError zurückgeben | Keine Doppel-Wrapping   |
+
+### Unit Tests - dateUtils (8 Tests)
+
+| ID    | Testfall                         | Erwartetes Ergebnis     |
+| ----- | -------------------------------- | ----------------------- |
+| DU-01 | Datumsformat YYYY-MM-DD          | Regex-Match             |
+| DU-02 | Konsistentes Datum am selben Tag | Gleiche Strings         |
+| DU-03 | Spezifisches Datum formatieren   | Korrektes Format        |
+| DU-04 | Einstellige Monate/Tage          | Mit führender 0         |
+| DU-05 | Zweistellige Monate/Tage         | Korrekt formatiert      |
+| DU-06 | Datumsvergleich gleich           | true                    |
+| DU-07 | Datumsvergleich unterschiedlich  | false                   |
+| DU-08 | Mitternacht-Übergang             | Korrekter Datumswechsel |
+
+### Integration Tests (24 Tests)
+
+| ID    | Testfall                                     | Erwartetes Ergebnis            |
+| ----- | -------------------------------------------- | ------------------------------ |
+| IT-01 | Wortanzahl 1-5 unterstützt                   | Alle Werte funktionieren       |
+| IT-02 | Default Wortanzahl-Setting                   | 3 als Standard                 |
+| IT-03 | Verschiedene Tage generieren unterschiedlich | Datumserkennung funktioniert   |
+| IT-04 | Gleicher Tag generiert gleich                | Konsistenz                     |
+| IT-05 | Datumsvergleich unterstützt                  | today != yesterday             |
+| IT-06 | Word-ID Konsistenz                           | Padding auf 5 Felder           |
+| IT-07 | Wortfilterung nach Typ                       | Affix/Konjunktion ausschließen |
+| IT-08 | Wortfilterung nach Frequenz                  | n/a ausschließen               |
+| IT-09 | Default Settings bei fehlenden Daten         | Standardwerte angewendet       |
+| IT-10 | Custom Settings                              | Benutzerwerte übernommen       |
+| IT-11 | anzahl_woerter Bereichsvalidierung           | 1-5 erlaubt                    |
+| IT-12 | Frequenz-Anzeige für gültige Klassen         | true                           |
+| IT-13 | Frequenz-Anzeige für n/a                     | false                          |
+| IT-14 | Frequenz-Anzeige für undefined               | false                          |
+| IT-15 | Frequenz-Anzeigetext                         | "Frequenz: X"                  |
+| IT-16 | Wortklasse immer anzeigen                    | truthy                         |
+| IT-17 | Lemma immer anzeigen                         | Nicht-leerer String            |
+| IT-18 | URL-Check für vorhandene URLs                | canOpen true                   |
+| IT-19 | URL-Check für leere URLs                     | canOpen false                  |
+| IT-20 | URL-Check für null                           | canOpen false                  |
+| IT-21 | Gültige URL-Formate                          | https:// Prefix                |
+| IT-22 | Leeres Array bei keinen Daten                | [] zurückgeben                 |
+| IT-23 | Null Settings Fallback                       | Default verwenden              |
+| IT-24 | Fehlende Word-Daten behandeln                | Nur valide IDs                 |
 
 ### Manuelle Tests (Blackbox-Testfälle)
 
@@ -520,22 +701,23 @@ Tests:       3 passed, 3 total
 
 ## 12. Testarten
 
-| Testart               | Beschreibung                                     | Umfang       |
-| --------------------- | ------------------------------------------------ | ------------ |
-| **Unit Tests**        | Isolierte Tests einzelner Funktionen/Komponenten | ~50 Tests    |
-| **Integration Tests** | Tests der Zusammenarbeit mehrerer Module         | ~20 Tests    |
-| **Manuelle Tests**    | Explorative und Akzeptanztests                   | Bei Bedarf   |
-| **Static Analysis**   | Automatische Code-Prüfung (Lint, Types)          | Jeder Commit |
+| Testart               | Beschreibung                                     | Umfang        |
+| --------------------- | ------------------------------------------------ | ------------- |
+| **Unit Tests**        | Isolierte Tests einzelner Funktionen/Komponenten | 112 Tests     |
+| **Integration Tests** | Tests der Zusammenarbeit mehrerer Module         | 24 Tests      |
+| **Manuelle Tests**    | Explorative und Akzeptanztests                   | 6 Testfälle   |
+| **Static Analysis**   | Automatische Code-Prüfung (Lint, Types)          | Jeder Commit  |
+| **Gesamt**            | Automatisierte Tests                             | **136 Tests** |
 
 ### Testpyramide
 
 ```
         /\
-       /  \      Manuelle Tests (wenige)
+       /  \      Manuelle Tests (6)
       /----\
-     /      \    Integration Tests (einige)
+     /      \    Integration Tests (24)
     /--------\
-   /          \  Unit Tests (viele)
+   /          \  Unit Tests (112)
   /------------\
 ```
 
