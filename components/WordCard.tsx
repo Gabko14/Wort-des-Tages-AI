@@ -9,6 +9,7 @@ import Animated, { FadeInDown, useAnimatedStyle, withSpring } from 'react-native
 import { Button } from '@/components/Button';
 import { QuizCard } from '@/components/QuizCard';
 import { Text, View, useThemeColor } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
 import { Wort } from '@/services/database';
 import { EnrichedWord } from '@/types/ai';
 
@@ -20,13 +21,53 @@ interface WordCardProps {
   index?: number;
 }
 
+const wordClassColors: Record<string, { light: string; dark: string }> = {
+  Substantiv: { light: '#4c6ef5', dark: '#748ffc' },
+  Adjektiv: { light: '#e599f7', dark: '#eebefa' },
+  Verb: { light: '#ffa94d', dark: '#ffc078' },
+  Adverb: { light: '#20c997', dark: '#63e6be' },
+  Konjunktion: { light: '#fab005', dark: '#ffd43b' },
+  Affix: { light: '#ff6b6b', dark: '#ff8787' },
+};
+
+const frequencyClassColors: Record<string, { light: string; dark: string }> = {
+  '1': { light: '#b30059', dark: '#ff6b9a' },
+  '2': { light: '#c92a2a', dark: '#ff8787' },
+  '3': { light: '#e8590c', dark: '#ffa94d' },
+  '4': { light: '#fab005', dark: '#ffd43b' },
+  '5': { light: '#2f9e44', dark: '#69db7c' },
+  'n/a': { light: '#868e96', dark: '#adb5bd' },
+};
+
+function getCategoryColor(
+  map: Record<string, { light: string; dark: string }>,
+  key: string,
+  colorScheme: 'light' | 'dark',
+  fallback: string
+) {
+  return map[key]?.[colorScheme] ?? fallback;
+}
+
 export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: WordCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const colorScheme = useColorScheme() ?? 'light';
   const cardBackground = useThemeColor({ light: '#f8f9fa', dark: '#1a1a1a' }, 'background');
   const borderColor = useThemeColor({ light: '#e9ecef', dark: '#333' }, 'background');
   const accentColor = useThemeColor({ light: '#2f95dc', dark: '#4da6ff' }, 'tint');
   const mutedColor = useThemeColor({ light: '#6c757d', dark: '#adb5bd' }, 'text');
   const iconColor = useThemeColor({ light: '#6c757d', dark: '#adb5bd' }, 'text');
+  const wordClassColor = getCategoryColor(
+    wordClassColors,
+    word.wortklasse,
+    colorScheme,
+    accentColor
+  );
+  const frequencyColor = getCategoryColor(
+    frequencyClassColors,
+    word.frequenzklasse,
+    colorScheme,
+    mutedColor
+  );
 
   const handleToggleExpand = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -63,11 +104,11 @@ export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: Word
         </View>
       </Pressable>
       <View style={[styles.tagContainer, { backgroundColor: 'transparent' }]}>
-        <View style={[styles.tag, { backgroundColor: accentColor }]}>
+        <View style={[styles.tag, { backgroundColor: wordClassColor }]}>
           <Text style={styles.tagText}>{word.wortklasse}</Text>
         </View>
         {word.frequenzklasse && word.frequenzklasse !== 'n/a' && (
-          <View style={[styles.tag, styles.frequencyTag, { backgroundColor: mutedColor }]}>
+          <View style={[styles.tag, styles.frequencyTag, { backgroundColor: frequencyColor }]}>
             <Text style={styles.tagText}>Frequenz: {word.frequenzklasse}</Text>
           </View>
         )}
