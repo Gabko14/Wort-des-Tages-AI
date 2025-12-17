@@ -552,7 +552,7 @@ Wir nutzen **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 2. Pull Request erstellen
 3. Code Review + CI muss grün sein
 4. Merge in `main`
-5. Tag erstellen (`v1.x.x`)
+5. Tag erstellen (`npm version patch   # oder minor/major`)
 6. Automatischer Build + Release
 
 Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für Details.
