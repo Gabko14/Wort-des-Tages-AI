@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet } from 'react-native';
 
 import * as Sentry from '@sentry/react-native';
+import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
 import { Button } from '@/components/Button';
@@ -19,7 +20,7 @@ import {
   scheduleDailyNotification,
   sendTestNotification,
 } from '@/services/notificationService';
-import { grantPremium } from '@/services/premiumService';
+import { checkPremiumStatus, getCachedPremiumStatus } from '@/services/premiumService';
 import {
   AppSettings,
   DEFAULT_SETTINGS,
@@ -28,14 +29,26 @@ import {
   FrequencyRange,
 } from '@/services/settingsService';
 import { clearTodaysWords } from '@/services/wordService';
+import { PremiumStatus } from '@/types/premium';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [devGranting, setDevGranting] = useState(false);
+  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(
+    getCachedPremiumStatus()
+  );
   const [testingNotification, setTestingNotification] = useState(false);
   const [refreshingWords, setRefreshingWords] = useState(false);
+
+  useEffect(() => {
+    // Load premium status
+    checkPremiumStatus()
+      .then((status) => setPremiumStatus(status))
+      .catch(() => {
+        // Ignore errors, use cached status
+      });
+  }, []);
 
   useEffect(() => {
     loadSettings()
@@ -191,29 +204,19 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleDevPremium = async () => {
-    setDevGranting(true);
-    try {
-      await grantPremium('dev');
-      Toast.show({
-        type: 'success',
-        text1: 'Premium aktiviert',
-        text2: 'Dev-Premium wurde erfolgreich aktiviert',
-      });
-    } catch (err) {
-      if (!__DEV__) {
-        Sentry.captureException(err, {
-          tags: { feature: 'dev_premium_grant' },
-          level: 'error',
-        });
-      }
+  const handleManageSubscription = () => {
+    // Open Google Play subscription management
+    Linking.openURL('https://play.google.com/store/account/subscriptions').catch(() => {
       Toast.show({
         type: 'error',
         text1: 'Fehler',
-        text2: 'Premium konnte nicht aktiviert werden',
+        text2: 'Play Store konnte nicht geöffnet werden',
       });
-    }
-    setDevGranting(false);
+    });
+  };
+
+  const handleUpgradePremium = () => {
+    router.push('/subscription');
   };
 
   const handleTestNotification = async () => {
@@ -328,19 +331,47 @@ export default function SettingsScreen() {
         </CollapsibleSection>
       )}
 
-      {__DEV__ && (
-        <CollapsibleSection title="Premium (Dev)">
-          <Button
-            variant="primary"
-            onPress={handleDevPremium}
-            title={devGranting ? 'Aktiviere...' : 'Premium aktivieren (Dev)'}
-            loading={devGranting}
-            disabled={devGranting}
-            icon="star-outline"
-            accessibilityLabel="Premium für Entwicklung aktivieren"
-          />
-        </CollapsibleSection>
-      )}
+      <CollapsibleSection title="Premium">
+        {premiumStatus?.isPremium ? (
+          <>
+            <View style={styles.premiumStatus}>
+              <Text style={styles.premiumStatusText}>Premium aktiv</Text>
+              {premiumStatus.source === 'google_play' && premiumStatus.expiresAt && (
+                <Text style={styles.premiumExpiryText}>
+                  {premiumStatus.autoRenewing
+                    ? `Verlängert sich am ${new Date(premiumStatus.expiresAt).toLocaleDateString('de-DE')}`
+                    : `Läuft ab am ${new Date(premiumStatus.expiresAt).toLocaleDateString('de-DE')}`}
+                </Text>
+              )}
+              {premiumStatus.source === 'dev' && (
+                <Text style={styles.premiumExpiryText}>Entwickler-Modus</Text>
+              )}
+            </View>
+            {premiumStatus.source === 'google_play' && (
+              <Button
+                variant="secondary"
+                onPress={handleManageSubscription}
+                title="Abonnement verwalten"
+                icon="open-outline"
+                accessibilityLabel="Abonnement im Play Store verwalten"
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <Text style={styles.premiumPromoText}>
+              Schalte KI-Definitionen, Beispielsätze und Quizfragen frei.
+            </Text>
+            <Button
+              variant="primary"
+              onPress={handleUpgradePremium}
+              title="Premium freischalten"
+              icon="star-outline"
+              accessibilityLabel="Premium-Abonnement abschließen"
+            />
+          </>
+        )}
+      </CollapsibleSection>
 
       {/* Über die App */}
       <CollapsibleSection title="Über die App">
@@ -390,5 +421,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.6,
     marginBottom: 12,
+  },
+  premiumStatus: {
+    marginBottom: 16,
+    backgroundColor: 'transparent',
+  },
+  premiumStatusText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4CAF50',
+    marginBottom: 4,
+  },
+  premiumExpiryText: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  premiumPromoText: {
+    fontSize: 14,
+    opacity: 0.8,
+    marginBottom: 16,
+    lineHeight: 20,
   },
 });

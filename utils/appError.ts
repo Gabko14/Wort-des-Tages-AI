@@ -9,7 +9,14 @@ export type AppErrorCode =
   | 'notifications_permission_failed'
   | 'notifications_schedule_failed'
   | 'notifications_test_failed'
-  | 'settings_save_failed';
+  | 'settings_save_failed'
+  | 'iap_init_failed'
+  | 'subscription_fetch_failed'
+  | 'purchase_failed'
+  | 'purchase_cancelled'
+  | 'validation_failed'
+  | 'restore_failed'
+  | 'platform_not_supported';
 
 export class AppError extends Error {
   readonly code: AppErrorCode;
