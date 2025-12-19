@@ -114,6 +114,14 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="subscription"
+          options={{
+            title: 'Premium',
+            presentation: 'modal',
+            headerShown: true,
+          }}
+        />
       </Stack>
       <Toast config={createToastConfig(colorScheme)} />
     </ThemeProvider>

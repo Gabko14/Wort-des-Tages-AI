@@ -1,17 +1,19 @@
 import { TouchableOpacity, StyleSheet } from 'react-native';
 
+import { router } from 'expo-router';
+
 import { Text, View } from '@/components/Themed';
 
-type PaywallTeaserProps = {
-  onPress: () => void;
-};
+export function PaywallTeaser() {
+  const handlePress = () => {
+    router.push('/subscription');
+  };
 
-export function PaywallTeaser({ onPress }: PaywallTeaserProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Premium-Feature</Text>
       <Text style={styles.text}>Schalte Premium frei, um KI-Aufgaben und Beispiele zu sehen.</Text>
-      <TouchableOpacity style={styles.button} onPress={onPress}>
+      <TouchableOpacity style={styles.button} onPress={handlePress}>
         <Text style={styles.buttonText}>Premium freischalten</Text>
       </TouchableOpacity>
     </View>

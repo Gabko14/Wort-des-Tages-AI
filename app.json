@@ -40,7 +40,8 @@
           "project": "react-native",
           "organization": "gibb-jw"
         }
-      ]
+      ],
+      "expo-iap"
     ],
     "assetBundlePatterns": ["assets/database/*"],
     "experiments": {

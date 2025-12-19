@@ -16,6 +16,8 @@ type Entitlement = {
   device_id: string;
   is_premium: boolean;
   premium_source: string | null;
+  expires_at: string | null;
+  auto_renewing: boolean;
 };
 
 serve(async (req) => {
@@ -46,7 +48,7 @@ serve(async (req) => {
 
   const { data, error } = await supabase
     .from<Entitlement>('entitlements')
-    .select('device_id,is_premium,premium_source')
+    .select('device_id,is_premium,premium_source,expires_at,auto_renewing')
     .eq('device_id', deviceId)
     .maybeSingle();
 
@@ -57,11 +59,38 @@ serve(async (req) => {
     });
   }
 
-  const isPremium = data?.is_premium ?? false;
+  let isPremium = data?.is_premium ?? false;
   const source = data?.premium_source ?? null;
+  const expiresAt = data?.expires_at ?? null;
+  const autoRenewing = data?.auto_renewing ?? false;
 
-  return new Response(JSON.stringify({ isPremium, source: source ?? undefined }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  // Check if subscription-based premium has expired
+  if (isPremium && source === 'google_play' && expiresAt) {
+    const expiryDate = new Date(expiresAt);
+    if (expiryDate < new Date()) {
+      isPremium = false;
+
+      // Update the database to reflect expired status
+      await supabase
+        .from('entitlements')
+        .update({
+          is_premium: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('device_id', deviceId);
+    }
+  }
+
+  return new Response(
+    JSON.stringify({
+      isPremium,
+      source: source ?? undefined,
+      expiresAt: expiresAt ?? undefined,
+      autoRenewing,
+    }),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
 });
