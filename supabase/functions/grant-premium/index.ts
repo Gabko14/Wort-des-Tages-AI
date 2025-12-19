@@ -18,6 +18,9 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+// Entitlements are keyed by device_id (not user account).
+// This means: same Google account = premium on all devices.
+// Purchase tokens are validated with Google API, not stored for uniqueness checks.
 type Entitlement = {
   device_id: string;
   is_premium: boolean;

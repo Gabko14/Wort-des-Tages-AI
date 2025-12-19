@@ -185,6 +185,11 @@ async function getSubscriptionDetails(
   }
 }
 
+// SECURITY NOTE: This endpoint is intentionally deployed without JWT verification.
+// Pub/Sub doesn't use Supabase JWT auth. The design relies on:
+// 1. Attackers not knowing valid purchase_tokens (operations only affect existing entitlements)
+// 2. Package name validation (line 210)
+// TODO: Add Pub/Sub OIDC token verification for production hardening
 serve(async (req) => {
   // Only accept POST from Cloud Pub/Sub
   if (req.method !== 'POST') {
