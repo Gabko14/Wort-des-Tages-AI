@@ -2,6 +2,10 @@ import { Asset } from 'expo-asset';
 import { Directory, File, Paths } from 'expo-file-system/next';
 import * as SQLite from 'expo-sqlite';
 
+import { Wort, WortDesTages, UserSettings } from '@/types/db';
+
+export { Wort, WortDesTages, UserSettings };
+
 const DATABASE_NAME = 'dwds.db';
 
 let db: SQLite.SQLiteDatabase | null = null;
@@ -37,29 +41,4 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     return initDatabase();
   }
   return db;
-}
-
-export interface Wort {
-  id: number;
-  lemma: string;
-  url: string;
-  wortklasse: string;
-  artikeldatum: string;
-  artikeltyp: string;
-  frequenzklasse: string;
-}
-
-export interface WortDesTages {
-  id: number;
-  fk_wort1: number;
-  fk_wort2: number;
-  fk_wort3: number;
-  fk_wort4: number;
-  fk_wort5: number;
-  date: string;
-}
-
-export interface UserSettings {
-  id: number;
-  anzahl_woerter: number;
 }
