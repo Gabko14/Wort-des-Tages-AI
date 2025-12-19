@@ -16,8 +16,6 @@ German "Word of the Day" mobile app built with Expo Router (React Native). Displ
 ## Commands
 
 ```bash
-npm start          # Dev server (Expo Go)
-npm start:tunnel   # Dev with tunnel for physical devices on different network
 npm test           # Run Jest tests
 npm run lint       # Check for linting errors
 npm run lint:fix   # Auto-fix linting/formatting
@@ -62,7 +60,7 @@ npx expo install   # Install dependencies with version alignment
 ### Premium/AI System
 
 - Device-based entitlements stored in Supabase `entitlements` table
-- `ai-enrich` Edge Function calls OpenAI (gpt-4o-mini) for word definitions
+- `ai-enrich` Edge Function calls OpenAI for word definitions
 - Services throw typed `AppError` on failures; UI decides fallback behavior
 - AI responses cached in AsyncStorage by word IDs
 
@@ -85,24 +83,6 @@ npx expo install   # Install dependencies with version alignment
     Toast.show({ type: 'error', text1: 'Title', text2: 'Message' });
   }
   ```
-
-### AppError Conventions
-
-Current error codes (defined in `utils/appError.ts`):
-
-| Code                              | When to Use                             |
-| --------------------------------- | --------------------------------------- |
-| `db_clear_failed`                 | SQLite database clearing failed         |
-| `supabase_not_configured`         | Missing Supabase URL or anon key        |
-| `supabase_invoke_failed`          | Edge Function invocation failed         |
-| `ai_enrich_failed`                | AI enrichment request failed            |
-| `premium_check_failed`            | Premium status check failed             |
-| `premium_grant_failed`            | Premium grant operation failed          |
-| `notifications_unavailable`       | Push notifications not supported        |
-| `notifications_permission_failed` | Failed to get notification permission   |
-| `notifications_schedule_failed`   | Failed to schedule notification         |
-| `notifications_test_failed`       | Test notification failed                |
-| `settings_save_failed`            | Failed to save settings to AsyncStorage |
 
 Wrap unknown errors at boundaries:
 
@@ -220,6 +200,8 @@ import { Wort } from '@/services/database';
   - Premium status cache should have a short TTL and be revalidated
 
 ### Supabase Edge Functions
+
+The Supabase CLI is not set up. The `supabase/` folder is reference code only. Use the Supabase MCP tools to deploy Edge Functions and apply migrations.
 
 Edge Functions use Deno runtime with ESM imports. Located in `supabase/functions/`:
 

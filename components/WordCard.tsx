@@ -1,10 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Linking, Pressable, StyleSheet } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
 import { QuizCard } from '@/components/QuizCard';
@@ -18,6 +27,50 @@ interface WordCardProps {
   aiLoading?: boolean;
   aiError?: boolean;
   index?: number;
+}
+
+const Sparkle = ({ index, size, x, y }: { index: number; size: number; x: number; y: number }) => {
+  const color = useThemeColor({ light: '#2f95dc', dark: '#4da6ff' }, 'tint');
+  const sv = useSharedValue(0);
+
+  useEffect(() => {
+    sv.value = withDelay(
+      index * 400,
+      withRepeat(
+        withSequence(withTiming(1, { duration: 1200 }), withTiming(0, { duration: 1200 })),
+        -1,
+        true
+      )
+    );
+  }, [index, sv]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: sv.value,
+    transform: [{ scale: 0.5 + sv.value * 0.5 }, { rotate: `${sv.value * 45}deg` }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        animatedStyle,
+        { position: 'absolute', left: x, top: y, backgroundColor: 'transparent' },
+      ]}
+    >
+      <Ionicons name="sparkles" size={size} color={color} />
+    </Animated.View>
+  );
+};
+
+function StardustLoader() {
+  return (
+    <View style={styles.loaderContainer}>
+      <View style={{ width: 60, height: 40, backgroundColor: 'transparent' }}>
+        <Sparkle index={0} size={24} x={18} y={8} />
+        <Sparkle index={1} size={16} x={42} y={2} />
+        <Sparkle index={2} size={12} x={6} y={22} />
+      </View>
+    </View>
+  );
 }
 
 export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: WordCardProps) {
@@ -86,7 +139,7 @@ export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: Word
               <Text style={styles.sectionText}>{enriched.exampleSentence}</Text>
             </View>
           )}
-          {aiLoading && !enriched && <Text style={styles.sectionText}>KI lädt...</Text>}
+          {aiLoading && !enriched && <StardustLoader />}
           {aiError && !enriched && !aiLoading && (
             <Text style={styles.errorText}>KI nicht verfügbar</Text>
           )}
@@ -169,6 +222,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  loaderContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: 'transparent',
   },
   linkButton: {
     paddingVertical: 8,
