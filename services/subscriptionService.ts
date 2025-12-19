@@ -1,17 +1,6 @@
 import { Platform } from 'react-native';
 
-import {
-  initConnection,
-  endConnection,
-  fetchProducts,
-  requestPurchase,
-  finishTransaction,
-  getAvailablePurchases,
-  type Purchase,
-  type ProductSubscription,
-  ErrorCode,
-} from 'expo-iap';
-import type { PurchaseError } from 'expo-iap';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 import { supabase } from '@/config/supabase';
 import { getDeviceId } from '@/services/deviceService';
@@ -27,6 +16,37 @@ export const SUBSCRIPTION_SKUS = {
 export type SubscriptionSku = (typeof SUBSCRIPTION_SKUS)[keyof typeof SUBSCRIPTION_SKUS];
 
 let isConnected = false;
+let didWarnExpoGo = false;
+
+/**
+ * Check if running in Expo Go (where native IAP modules aren't available)
+ */
+function isExpoGo(): boolean {
+  return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+}
+
+/**
+ * Dynamically import expo-iap module (not available in Expo Go)
+ */
+async function getIAPModule() {
+  if (isExpoGo()) {
+    if (!didWarnExpoGo) {
+      didWarnExpoGo = true;
+      console.warn('In-App Purchases are not available in Expo Go. Use a development build.');
+    }
+    return null;
+  }
+
+  try {
+    return await import('expo-iap');
+  } catch (err) {
+    throw new AppError(
+      'iap_init_failed',
+      'In-App-Käufe sind auf diesem Gerät nicht verfügbar.',
+      err
+    );
+  }
+}
 
 /**
  * Initialize IAP connection to Google Play Billing.
@@ -37,12 +57,17 @@ export async function initializeIAP(): Promise<boolean> {
     return false;
   }
 
+  const iap = await getIAPModule();
+  if (!iap) {
+    return false;
+  }
+
   if (isConnected) {
     return true;
   }
 
   try {
-    const result = await initConnection();
+    const result = await iap.initConnection();
     isConnected = Boolean(result);
     return isConnected;
   } catch (error) {
@@ -60,8 +85,11 @@ export async function initializeIAP(): Promise<boolean> {
 export async function cleanupIAP(): Promise<void> {
   if (!isConnected) return;
 
+  const iap = await getIAPModule();
+  if (!iap) return;
+
   try {
-    await endConnection();
+    await iap.endConnection();
     isConnected = false;
   } catch {
     // Ignore cleanup errors
@@ -76,19 +104,25 @@ export async function fetchSubscriptionProducts(): Promise<SubscriptionProduct[]
     return [];
   }
 
+  const iap = await getIAPModule();
+  if (!iap) {
+    return [];
+  }
+
   if (!isConnected) {
     await initializeIAP();
   }
 
   try {
     const skus = Object.values(SUBSCRIPTION_SKUS);
-    const products = await fetchProducts({ skus, type: 'subs' });
+    const products = await iap.fetchProducts({ skus, type: 'subs' });
 
     if (!products) {
       return [];
     }
 
     // Filter to only subscription products (type === 'subs')
+    type ProductSubscription = Extract<(typeof products)[number], { type: 'subs' }>;
     const subscriptions = products.filter((p): p is ProductSubscription => p.type === 'subs');
 
     return subscriptions.map((sub) => {
@@ -116,6 +150,8 @@ export async function fetchSubscriptionProducts(): Promise<SubscriptionProduct[]
   }
 }
 
+type Purchase = Awaited<ReturnType<typeof import('expo-iap').getAvailablePurchases>>[number];
+
 /**
  * Initiate a subscription purchase flow.
  */
@@ -124,13 +160,19 @@ export async function purchaseSubscription(sku: SubscriptionSku): Promise<Purcha
     throw new AppError('platform_not_supported', 'Abonnements nur auf Android verfügbar.');
   }
 
+  const iap = await getIAPModule();
+  if (!iap) {
+    throw new AppError('iap_init_failed', 'In-App-Käufe sind in Expo Go nicht verfügbar.');
+  }
+
   if (!isConnected) {
     await initializeIAP();
   }
 
   try {
     // Get subscription details to find the offer token
-    const products = await fetchProducts({ skus: [sku], type: 'subs' });
+    const products = await iap.fetchProducts({ skus: [sku], type: 'subs' });
+    type ProductSubscription = Extract<NonNullable<typeof products>[number], { type: 'subs' }>;
     const subscription = products?.find(
       (p): p is ProductSubscription => p.type === 'subs' && p.id === sku
     );
@@ -145,7 +187,7 @@ export async function purchaseSubscription(sku: SubscriptionSku): Promise<Purcha
         ? (subscription.subscriptionOfferDetailsAndroid?.[0]?.offerToken ?? '')
         : '';
 
-    const purchase = await requestPurchase({
+    const purchase = await iap.requestPurchase({
       request: {
         google: {
           skus: [sku],
@@ -167,8 +209,8 @@ export async function purchaseSubscription(sku: SubscriptionSku): Promise<Purcha
 
     return singlePurchase;
   } catch (error) {
-    const purchaseError = error as PurchaseError;
-    if (purchaseError.code === ErrorCode.UserCancelled) {
+    const purchaseError = error as { code?: string };
+    if (purchaseError.code === iap.ErrorCode.UserCancelled) {
       throw new AppError('purchase_cancelled', 'Kauf wurde abgebrochen.');
     }
     throw new AppError('purchase_failed', 'Kauf fehlgeschlagen.', error);
@@ -219,8 +261,11 @@ export async function validateAndGrantSubscription(
  * This tells Google Play the purchase was processed.
  */
 export async function acknowledgeSubscription(purchase: Purchase): Promise<void> {
+  const iap = await getIAPModule();
+  if (!iap) return;
+
   try {
-    await finishTransaction({
+    await iap.finishTransaction({
       purchase,
       isConsumable: false,
     });
@@ -242,12 +287,17 @@ export async function restorePurchases(): Promise<boolean> {
     throw new AppError('supabase_not_configured', 'Server nicht verfügbar.');
   }
 
+  const iap = await getIAPModule();
+  if (!iap) {
+    return false;
+  }
+
   if (!isConnected) {
     await initializeIAP();
   }
 
   try {
-    const purchases = await getAvailablePurchases();
+    const purchases = await iap.getAvailablePurchases();
 
     if (!purchases || purchases.length === 0) {
       return false;
