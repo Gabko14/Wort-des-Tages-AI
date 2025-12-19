@@ -32,16 +32,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build APK
-        run: eas build --platform android --profile preview --non-interactive --json > build-result.json
+      - name: Build AAB
+        run: eas build --platform android --profile production --non-interactive --json > build-result.json
 
-      - name: Download APK from EAS
+      - name: Download AAB from EAS
         run: |
-          APK_URL=$(jq -r '.[0].artifacts.buildUrl' build-result.json)
-          curl -L -o wort-des-tages-${{ github.ref_name }}.apk "$APK_URL"
+          AAB_URL=$(jq -r '.[0].artifacts.buildUrl' build-result.json)
+          curl -L -o wort-des-tages-${{ github.ref_name }}.aab "$AAB_URL"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: wort-des-tages-${{ github.ref_name }}.apk
+          files: wort-des-tages-${{ github.ref_name }}.aab
           generate_release_notes: true
