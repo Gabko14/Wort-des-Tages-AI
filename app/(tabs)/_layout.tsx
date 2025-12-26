@@ -19,7 +19,8 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const textColor = Colors[colorScheme ?? 'light'].text;
+  const theme = colorScheme === 'dark' ? 'dark' : 'light';
+  const textColor = Colors[theme].text;
   const info = useMemo(() => getUpdateInfo(), []);
 
   const showUpdateDetails = useCallback(() => {
@@ -37,7 +38,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors[theme].tint,
         headerShown: useClientOnlyValue(false, true),
         headerRight: () => (
           <TouchableOpacity onPress={showUpdateDetails} style={{ marginRight: 16 }}>
