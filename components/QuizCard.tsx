@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Pressable, StyleSheet } from 'react-native';
 
+import * as Sentry from '@sentry/react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/components/Button';
@@ -54,8 +55,14 @@ export function QuizCard({ quiz, wordId, onQuizComplete }: QuizCardProps) {
           .then((result) => {
             onQuizComplete?.(result);
           })
-          .catch(() => {
-            // Silent fail - gamification tracking is non-critical
+          .catch((err) => {
+            // Non-critical - log to Sentry for visibility
+            if (!__DEV__) {
+              Sentry.captureException(err, {
+                tags: { feature: 'quiz_completion_tracking' },
+                level: 'info',
+              });
+            }
           });
       }
     }
