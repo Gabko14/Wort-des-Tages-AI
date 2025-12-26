@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import type { NotificationRequest } from 'expo-notifications';
 
+import { getNotificationContent } from '@/services/gamificationService';
 import { AppError } from '@/utils/appError';
 
 let didWarnExpoGo = false;
@@ -107,10 +108,13 @@ export async function scheduleDailyNotification(timeString: string): Promise<str
       return null;
     }
 
+    // Get dynamic notification content based on streak status
+    const { title, body } = await getNotificationContent();
+
     const identifier = await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Wort des Tages',
-        body: 'Zeit für deine täglichen Wörter! Lerne heute neue Vokabeln.',
+        title,
+        body,
         data: { screen: 'home' },
       },
       trigger: {
@@ -192,5 +196,34 @@ export async function sendTestNotification(): Promise<boolean> {
       'Testbenachrichtigung konnte nicht gesendet werden.',
       err
     );
+  }
+}
+
+/**
+ * Refresh the scheduled notification content with latest streak data.
+ * Call this when the app opens to keep notification content up-to-date.
+ *
+ * @param timeString - The notification time (e.g., "09:00")
+ * @returns true if notification was refreshed, false if notifications are not enabled
+ */
+export async function refreshNotificationContent(timeString: string): Promise<boolean> {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return false;
+  }
+
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    if (scheduled.length === 0) {
+      // No notifications scheduled, nothing to refresh
+      return false;
+    }
+
+    // Re-schedule with fresh content
+    const identifier = await scheduleDailyNotification(timeString);
+    return identifier !== null;
+  } catch {
+    // Silent fail - refreshing content is non-critical
+    return false;
   }
 }

@@ -12,7 +12,9 @@ import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { enrichWords } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
+import { refreshNotificationContent } from '@/services/notificationService';
 import { checkPremiumStatus } from '@/services/premiumService';
+import { loadSettings } from '@/services/settingsService';
 import { getOrGenerateTodaysWords } from '@/services/wordService';
 import { EnrichedWord } from '@/types/ai';
 
@@ -36,6 +38,17 @@ export default function HomeScreen() {
       setLoadingMessage('Lade Wörter des Tages...');
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);
+
+      // Refresh notification content with latest streak data (non-blocking)
+      loadSettings()
+        .then((settings) => {
+          if (settings.notificationsEnabled) {
+            return refreshNotificationContent(settings.notificationTime);
+          }
+        })
+        .catch(() => {
+          // Silent fail - notification refresh is non-critical
+        });
 
       let premiumEnabled = false;
       try {

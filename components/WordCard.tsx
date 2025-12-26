@@ -143,7 +143,7 @@ export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: Word
           {aiError && !enriched && !aiLoading && (
             <Text style={styles.errorText}>KI nicht verfügbar</Text>
           )}
-          {enriched?.quiz && <QuizCard quiz={enriched.quiz} />}
+          {enriched?.quiz && <QuizCard quiz={enriched.quiz} wordId={word.id} />}
           <Button
             variant="ghost"
             onPress={handleOpenUrl}
