@@ -19,6 +19,7 @@ import { Button } from '@/components/Button';
 import { QuizCard } from '@/components/QuizCard';
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { Wort } from '@/services/database';
+import type { QuizCompletionResult } from '@/services/gamificationService';
 import { EnrichedWord } from '@/types/ai';
 
 interface WordCardProps {
@@ -27,6 +28,7 @@ interface WordCardProps {
   aiLoading?: boolean;
   aiError?: boolean;
   index?: number;
+  onQuizComplete?: (result: QuizCompletionResult) => void;
 }
 
 const Sparkle = ({ index, size, x, y }: { index: number; size: number; x: number; y: number }) => {
@@ -73,7 +75,14 @@ function StardustLoader() {
   );
 }
 
-export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: WordCardProps) {
+export function WordCard({
+  word,
+  enriched,
+  aiLoading,
+  aiError,
+  index = 0,
+  onQuizComplete,
+}: WordCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const cardBackground = useThemeColor({ light: '#f8f9fa', dark: '#1a1a1a' }, 'background');
   const borderColor = useThemeColor({ light: '#e9ecef', dark: '#333' }, 'background');
@@ -143,7 +152,9 @@ export function WordCard({ word, enriched, aiLoading, aiError, index = 0 }: Word
           {aiError && !enriched && !aiLoading && (
             <Text style={styles.errorText}>KI nicht verfügbar</Text>
           )}
-          {enriched?.quiz && <QuizCard quiz={enriched.quiz} wordId={word.id} />}
+          {enriched?.quiz && (
+            <QuizCard quiz={enriched.quiz} wordId={word.id} onQuizComplete={onQuizComplete} />
+          )}
           <Button
             variant="ghost"
             onPress={handleOpenUrl}

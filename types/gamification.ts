@@ -62,26 +62,6 @@ export interface GamificationStats {
 }
 
 /**
- * Event types for gamification actions.
- * Can be extended for future features like achievements.
- */
-export type GamificationEventType =
-  | 'quiz_completed'
-  | 'streak_increased'
-  | 'streak_lost'
-  | 'milestone_reached';
-
-/**
- * Gamification event - used for tracking and potentially triggering
- * achievements or notifications.
- */
-export interface GamificationEvent {
-  type: GamificationEventType;
-  timestamp: number;
-  data: Record<string, unknown>;
-}
-
-/**
  * Milestone thresholds for streak achievements.
  * These can trigger special notifications or badges.
  */
