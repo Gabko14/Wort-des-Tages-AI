@@ -1,10 +1,57 @@
-jest.mock('expo-asset');
-jest.mock('expo-file-system/next');
-jest.mock('expo-sqlite');
+/* eslint-disable @typescript-eslint/no-require-imports */
+// Configurable mock state - set these before each test
+let mockDirectoryExistsValue = true;
+let mockFileExistsValue = true;
+let mockAssetValue: { downloadAsync: jest.Mock; localUri: string | null } | null = null;
+
+// Mock expo-asset with configurable return value
+jest.mock('expo-asset', () => ({
+  Asset: {
+    fromModule: jest.fn(() => mockAssetValue),
+  },
+}));
+
+// Mock expo-file-system/next
+const mockDirectoryCreate = jest.fn();
+const mockFileCopy = jest.fn();
+
+jest.mock('expo-file-system/next', () => ({
+  Directory: jest.fn().mockImplementation(() => ({
+    get exists() {
+      return mockDirectoryExistsValue;
+    },
+    create: mockDirectoryCreate,
+  })),
+  File: jest.fn().mockImplementation(() => ({
+    get exists() {
+      return mockFileExistsValue;
+    },
+    copy: mockFileCopy,
+  })),
+  Paths: {
+    document: '/mock/document',
+  },
+}));
+
+// Mock expo-sqlite
+const mockOpenDatabaseAsync = jest.fn();
+jest.mock('expo-sqlite', () => ({
+  openDatabaseAsync: (...args: unknown[]) => mockOpenDatabaseAsync(...args),
+}));
+
+// Import after mocks are set up - must be after jest.mock calls
+// eslint-disable-next-line import/first
+import { Asset } from 'expo-asset';
 
 describe('Database Module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset module state between tests
+    jest.resetModules();
+    // Reset configurable mock state
+    mockDirectoryExistsValue = true;
+    mockFileExistsValue = true;
+    mockAssetValue = null;
   });
 
   describe('Wort interface', () => {
@@ -164,6 +211,155 @@ describe('Database Module', () => {
       validFrequencyClasses.forEach((freq) => {
         expect(typeof freq).toBe('string');
       });
+    });
+  });
+
+  describe('initDatabase', () => {
+    const loadDatabaseModule = () => {
+      let module: typeof import('../database');
+      jest.isolateModules(() => {
+        module = require('../database');
+      });
+      return module!;
+    };
+
+    it('should return cached database on subsequent calls', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = true;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { initDatabase } = loadDatabaseModule();
+
+      const db1 = await initDatabase();
+      const db2 = await initDatabase();
+
+      expect(db1).toBe(db2);
+      expect(mockOpenDatabaseAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create SQLite directory if it does not exist', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockDirectoryExistsValue = false;
+      mockFileExistsValue = true;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { initDatabase } = loadDatabaseModule();
+      await initDatabase();
+
+      expect(mockDirectoryCreate).toHaveBeenCalled();
+    });
+
+    it('should not create directory if it already exists', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = true;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { initDatabase } = loadDatabaseModule();
+      await initDatabase();
+
+      expect(mockDirectoryCreate).not.toHaveBeenCalled();
+    });
+
+    it('should copy database from assets if file does not exist', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockAssetValue = {
+        downloadAsync: jest.fn().mockResolvedValue(undefined),
+        localUri: '/mock/asset/path/dwds.db',
+      };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = false;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { initDatabase } = loadDatabaseModule();
+      await initDatabase();
+
+      expect(mockAssetValue.downloadAsync).toHaveBeenCalled();
+      expect(mockFileCopy).toHaveBeenCalled();
+    });
+
+    it('should not copy database if file already exists', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = true;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { initDatabase } = loadDatabaseModule();
+      await initDatabase();
+
+      expect(Asset.fromModule).not.toHaveBeenCalled();
+      expect(mockFileCopy).not.toHaveBeenCalled();
+    });
+
+    it('should open database with correct name', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = true;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { initDatabase } = loadDatabaseModule();
+      await initDatabase();
+
+      expect(mockOpenDatabaseAsync).toHaveBeenCalledWith('dwds.db');
+    });
+
+    it('should handle missing localUri gracefully', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockAssetValue = {
+        downloadAsync: jest.fn().mockResolvedValue(undefined),
+        localUri: null, // No local URI
+      };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = false;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { initDatabase } = loadDatabaseModule();
+      await initDatabase();
+
+      // Should not attempt to copy if no localUri
+      expect(mockFileCopy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getDatabase', () => {
+    const loadDatabaseModule = () => {
+      let module: typeof import('../database');
+      jest.isolateModules(() => {
+        module = require('../database');
+      });
+      return module!;
+    };
+
+    it('should initialize database if not already initialized', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = true;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { getDatabase } = loadDatabaseModule();
+      const db = await getDatabase();
+
+      expect(db).toBe(mockDb);
+      expect(mockOpenDatabaseAsync).toHaveBeenCalled();
+    });
+
+    it('should return cached database after initialization', async () => {
+      const mockDb = { name: 'mockDb' };
+      mockDirectoryExistsValue = true;
+      mockFileExistsValue = true;
+      mockOpenDatabaseAsync.mockResolvedValue(mockDb);
+
+      const { getDatabase, initDatabase } = loadDatabaseModule();
+
+      // First init
+      await initDatabase();
+
+      // Then get
+      const db = await getDatabase();
+
+      expect(db).toBe(mockDb);
+      expect(mockOpenDatabaseAsync).toHaveBeenCalledTimes(1);
     });
   });
 });

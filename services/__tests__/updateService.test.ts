@@ -9,6 +9,8 @@ type MockUpdates = {
   createdAt?: Date;
 };
 
+type MockConstants = typeof Constants & { expoConfig: { version: string } };
+
 const mockUpdates: MockUpdates = {
   manifest: {},
   updateId: undefined,
@@ -74,7 +76,7 @@ describe('updateService', () => {
     const info = getUpdateInfo();
 
     expect(info).toEqual({
-      version: (Constants as any).expoConfig.version,
+      version: (Constants as MockConstants).expoConfig.version,
       updateId: 'abcdef1',
       fullUpdateId: 'abcdef123456',
       channel: 'production',
