@@ -46,7 +46,9 @@ export async function getTodaysWords(): Promise<Wort[]> {
     wordIds
   );
 
-  return words;
+  // Preserve the order from fk_wort1, fk_wort2, etc.
+  const wordsById = new Map(words.map((w) => [w.id, w]));
+  return wordIds.map((id) => wordsById.get(id)).filter((w): w is Wort => w !== undefined);
 }
 
 export interface WordSelectionOptions {
