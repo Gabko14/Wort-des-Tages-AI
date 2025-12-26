@@ -13,7 +13,11 @@ import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { enrichWords } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
-import { getCurrentStreak, hasCompletedToday } from '@/services/gamificationService';
+import {
+  getCurrentStreak,
+  hasCompletedToday,
+  QuizCompletionResult,
+} from '@/services/gamificationService';
 import { refreshNotificationContent } from '@/services/notificationService';
 import { checkPremiumStatus } from '@/services/premiumService';
 import { loadSettings } from '@/services/settingsService';
@@ -50,8 +54,11 @@ export default function HomeScreen() {
           setStreak(streakData);
           setCompletedToday(completed);
         })
-        .catch(() => {
-          // Silent fail - streak display is non-critical
+        .catch((err) => {
+          // Non-critical - log to Sentry for visibility
+          if (!__DEV__) {
+            Sentry.captureException(err, { tags: { feature: 'streak_loading' }, level: 'info' });
+          }
         });
 
       // Refresh notification content with latest streak data (non-blocking)
@@ -61,8 +68,14 @@ export default function HomeScreen() {
             return refreshNotificationContent(settings.notificationTime);
           }
         })
-        .catch(() => {
-          // Silent fail - notification refresh is non-critical
+        .catch((err) => {
+          // Non-critical - log to Sentry for visibility
+          if (!__DEV__) {
+            Sentry.captureException(err, {
+              tags: { feature: 'notification_refresh' },
+              level: 'info',
+            });
+          }
         });
 
       let premiumEnabled = false;
@@ -153,32 +166,29 @@ export default function HomeScreen() {
     loadWords();
   };
 
-  const handleQuizComplete = useCallback(
-    (result: import('@/services/gamificationService').QuizCompletionResult) => {
-      // Update streak display
-      setStreak(result.streak);
-      setCompletedToday(true);
+  const handleQuizComplete = useCallback((result: QuizCompletionResult) => {
+    // Update streak display
+    setStreak(result.streak);
+    setCompletedToday(true);
 
-      // Show milestone celebration
-      if (result.milestoneReached) {
-        Toast.show({
-          type: 'success',
-          text1: `${result.milestoneReached} Tage!`,
-          text2: 'Meilenstein erreicht - weiter so!',
-          visibilityTime: 4000,
-        });
-      } else if (result.isFirstCompletionToday && result.streak.currentStreak > 1) {
-        // Show streak continuation message
-        Toast.show({
-          type: 'success',
-          text1: `${result.streak.currentStreak} Tage in Folge!`,
-          text2: 'Deine Serie geht weiter',
-          visibilityTime: 3000,
-        });
-      }
-    },
-    []
-  );
+    // Show milestone celebration
+    if (result.milestoneReached) {
+      Toast.show({
+        type: 'success',
+        text1: `${result.milestoneReached} Tage!`,
+        text2: 'Meilenstein erreicht - weiter so!',
+        visibilityTime: 4000,
+      });
+    } else if (result.isFirstCompletionToday && result.streak.currentStreak > 1) {
+      // Show streak continuation message
+      Toast.show({
+        type: 'success',
+        text1: `${result.streak.currentStreak} Tage in Folge!`,
+        text2: 'Deine Serie geht weiter',
+        visibilityTime: 3000,
+      });
+    }
+  }, []);
 
   const renderItem = useCallback(
     ({ item, index }: { item: Wort; index: number }) => (

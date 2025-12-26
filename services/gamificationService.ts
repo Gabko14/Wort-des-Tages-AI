@@ -27,6 +27,9 @@ let cachedCompletions: QuizCompletion[] | null = null;
 
 /**
  * Get today's date as YYYY-MM-DD string in local timezone.
+ *
+ * Uses local timezone intentionally: a user's "day" for streak purposes
+ * should match their local perception of the day, not UTC.
  */
 export function getTodayDateString(): string {
   const now = new Date();
