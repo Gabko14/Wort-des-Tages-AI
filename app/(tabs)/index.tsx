@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet } from 'react-native';
 
 import * as Sentry from '@sentry/react-native';
+import { useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
-import { useDailyRefresh } from '@/hooks/useDailyRefresh';
 import { enrichWords } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
 import { checkPremiumStatus } from '@/services/premiumService';
@@ -101,9 +101,12 @@ export default function HomeScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadWords();
-  }, [loadWords]);
+  // Reload words when screen gains focus (handles settings/premium changes)
+  useFocusEffect(
+    useCallback(() => {
+      loadWords();
+    }, [loadWords])
+  );
 
   // Timer for loading seconds
   useEffect(() => {
@@ -116,8 +119,6 @@ export default function HomeScreen() {
     }, 1000);
     return () => clearInterval(interval);
   }, [loading]);
-
-  useDailyRefresh(loadWords);
 
   const onRefresh = () => {
     setRefreshing(true);

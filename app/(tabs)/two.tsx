@@ -73,7 +73,32 @@ export default function SettingsScreen() {
       });
   }, []);
 
+  // For word-affecting settings: clear today's words so they regenerate
   const updateSettings = useCallback(async (newSettings: AppSettings) => {
+    setSettings(newSettings);
+    setSaving(true);
+    try {
+      await clearTodaysWords();
+      await saveSettings(newSettings);
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'settings_save' },
+          level: 'error',
+        });
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'Fehler beim Speichern',
+        text2: 'Einstellungen konnten nicht gespeichert werden',
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  // For notification settings that don't affect word generation
+  const updateNotificationSettings = useCallback(async (newSettings: AppSettings) => {
     setSettings(newSettings);
     setSaving(true);
     try {
@@ -126,7 +151,7 @@ export default function SettingsScreen() {
       try {
         const identifier = await scheduleDailyNotification(settings.notificationTime);
         if (identifier) {
-          void updateSettings({ ...settings, notificationsEnabled: true });
+          void updateNotificationSettings({ ...settings, notificationsEnabled: true });
           Toast.show({
             type: 'success',
             text1: 'Benachrichtigungen aktiviert',
@@ -155,7 +180,7 @@ export default function SettingsScreen() {
     } else {
       try {
         await cancelAllNotifications();
-        void updateSettings({ ...settings, notificationsEnabled: false });
+        void updateNotificationSettings({ ...settings, notificationsEnabled: false });
         Toast.show({
           type: 'success',
           text1: 'Benachrichtigungen deaktiviert',
@@ -178,7 +203,7 @@ export default function SettingsScreen() {
 
   const handleTimeChange = async (time: string) => {
     const newSettings = { ...settings, notificationTime: time };
-    await updateSettings(newSettings);
+    await updateNotificationSettings(newSettings);
 
     if (settings.notificationsEnabled) {
       try {

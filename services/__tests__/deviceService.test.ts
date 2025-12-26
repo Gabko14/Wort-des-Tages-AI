@@ -84,4 +84,95 @@ describe('deviceService', () => {
     (Math.random as jest.Mock).mockRestore();
     jest.useRealTimers();
   });
+
+  it('falls back to generated ID when iOS native call fails', async () => {
+    Platform.OS = 'ios';
+    jest.useFakeTimers().setSystemTime(new Date('2024-05-10T00:00:00Z'));
+    jest.spyOn(Math, 'random').mockReturnValue(0.123456789);
+    getIosIdForVendorAsync.mockRejectedValue(new Error('iOS error'));
+
+    const { getDeviceId } = loadService();
+    const id = await getDeviceId();
+
+    expect(id).toBe('dev-1715299200000-1f9add3739635f');
+
+    (Math.random as jest.Mock).mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('falls back to generated ID when iOS returns null', async () => {
+    Platform.OS = 'ios';
+    jest.useFakeTimers().setSystemTime(new Date('2024-05-10T00:00:00Z'));
+    jest.spyOn(Math, 'random').mockReturnValue(0.123456789);
+    getIosIdForVendorAsync.mockResolvedValue(null);
+
+    const { getDeviceId } = loadService();
+    const id = await getDeviceId();
+
+    expect(id).toBe('dev-1715299200000-1f9add3739635f');
+
+    (Math.random as jest.Mock).mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('falls back to generated ID when Android returns null', async () => {
+    Platform.OS = 'android';
+    jest.useFakeTimers().setSystemTime(new Date('2024-05-10T00:00:00Z'));
+    jest.spyOn(Math, 'random').mockReturnValue(0.123456789);
+    getAndroidId.mockReturnValue(null);
+
+    const { getDeviceId } = loadService();
+    const id = await getDeviceId();
+
+    expect(id).toBe('dev-1715299200000-1f9add3739635f');
+
+    (Math.random as jest.Mock).mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('falls back to generated ID on unknown platform', async () => {
+    Platform.OS = 'web';
+    jest.useFakeTimers().setSystemTime(new Date('2024-05-10T00:00:00Z'));
+    jest.spyOn(Math, 'random').mockReturnValue(0.123456789);
+
+    const { getDeviceId } = loadService();
+    const id = await getDeviceId();
+
+    expect(id).toBe('dev-1715299200000-1f9add3739635f');
+
+    (Math.random as jest.Mock).mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('handles AsyncStorage.getItem error gracefully', async () => {
+    getAndroidId.mockReturnValue('android-id');
+    jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('Storage error'));
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    const { getDeviceId } = loadService();
+    const id = await getDeviceId();
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to read device ID from storage:',
+      expect.any(Error)
+    );
+    expect(id).toBe('android-id');
+
+    consoleSpy.mockRestore();
+  });
+
+  it('handles AsyncStorage.setItem error gracefully', async () => {
+    getAndroidId.mockReturnValue('android-id');
+    jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('Storage error'));
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    const { getDeviceId } = loadService();
+    const id = await getDeviceId();
+
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to persist device ID:', expect.any(Error));
+    // Should still return the ID even if storage fails
+    expect(id).toBe('android-id');
+
+    consoleSpy.mockRestore();
+  });
 });
