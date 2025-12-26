@@ -8,15 +8,18 @@ import Toast from 'react-native-toast-message';
 
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
+import { StreakBadge } from '@/components/StreakBadge';
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { enrichWords } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
+import { getCurrentStreak, hasCompletedToday } from '@/services/gamificationService';
 import { refreshNotificationContent } from '@/services/notificationService';
 import { checkPremiumStatus } from '@/services/premiumService';
 import { loadSettings } from '@/services/settingsService';
 import { getOrGenerateTodaysWords } from '@/services/wordService';
 import { EnrichedWord } from '@/types/ai';
+import type { StreakData } from '@/types/gamification';
 
 export default function HomeScreen() {
   const [words, setWords] = useState<Wort[]>([]);
@@ -29,6 +32,8 @@ export default function HomeScreen() {
   const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>({});
   const [loadingMessage, setLoadingMessage] = useState('Lade Wörter des Tages...');
   const [loadingSeconds, setLoadingSeconds] = useState(0);
+  const [streak, setStreak] = useState<StreakData | null>(null);
+  const [completedToday, setCompletedToday] = useState(false);
 
   const loadWords = useCallback(async () => {
     try {
@@ -38,6 +43,16 @@ export default function HomeScreen() {
       setLoadingMessage('Lade Wörter des Tages...');
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);
+
+      // Load streak data (non-blocking)
+      Promise.all([getCurrentStreak(), hasCompletedToday()])
+        .then(([streakData, completed]) => {
+          setStreak(streakData);
+          setCompletedToday(completed);
+        })
+        .catch(() => {
+          // Silent fail - streak display is non-critical
+        });
 
       // Refresh notification content with latest streak data (non-blocking)
       loadSettings()
@@ -138,6 +153,33 @@ export default function HomeScreen() {
     loadWords();
   };
 
+  const handleQuizComplete = useCallback(
+    (result: import('@/services/gamificationService').QuizCompletionResult) => {
+      // Update streak display
+      setStreak(result.streak);
+      setCompletedToday(true);
+
+      // Show milestone celebration
+      if (result.milestoneReached) {
+        Toast.show({
+          type: 'success',
+          text1: `${result.milestoneReached} Tage!`,
+          text2: 'Meilenstein erreicht - weiter so!',
+          visibilityTime: 4000,
+        });
+      } else if (result.isFirstCompletionToday && result.streak.currentStreak > 1) {
+        // Show streak continuation message
+        Toast.show({
+          type: 'success',
+          text1: `${result.streak.currentStreak} Tage in Folge!`,
+          text2: 'Deine Serie geht weiter',
+          visibilityTime: 3000,
+        });
+      }
+    },
+    []
+  );
+
   const renderItem = useCallback(
     ({ item, index }: { item: Wort; index: number }) => (
       <WordCard
@@ -146,9 +188,10 @@ export default function HomeScreen() {
         aiLoading={isPremium && aiLoading}
         aiError={isPremium && aiError}
         index={index}
+        onQuizComplete={handleQuizComplete}
       />
     ),
-    [enrichedMap, isPremium, aiLoading, aiError]
+    [enrichedMap, isPremium, aiLoading, aiError, handleQuizComplete]
   );
 
   const keyExtractor = useCallback((item: Wort) => item.id.toString(), []);
@@ -165,9 +208,10 @@ export default function HomeScreen() {
             day: 'numeric',
           })}
         </Text>
+        {streak && <StreakBadge streak={streak} completedToday={completedToday} />}
       </View>
     ),
-    [] // Date formatting happens once per component mount, refreshes on daily reload
+    [streak, completedToday]
   );
 
   const ListEmpty = useMemo(() => <EmptyState />, []);
