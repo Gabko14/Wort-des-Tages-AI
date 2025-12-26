@@ -7,6 +7,7 @@ import {
 } from '@/services/settingsService';
 import { AppError } from '@/utils/appError';
 
+// TEST
 function getTodayDateString(): string {
   const today = new Date();
   return today.toISOString().split('T')[0];
