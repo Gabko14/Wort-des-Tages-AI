@@ -3,12 +3,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet } from 'react-native';
 
 import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
 import { Button } from '@/components/Button';
 import { CollapsibleSection } from '@/components/CollapsibleSection';
-import { AboutSection } from '@/components/settings/AboutSection';
 import { FrequencySelector } from '@/components/settings/FrequencySelector';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { WordCountSelector } from '@/components/settings/WordCountSelector';
@@ -398,10 +398,9 @@ export default function SettingsScreen() {
         )}
       </CollapsibleSection>
 
-      {/* Über die App */}
-      <CollapsibleSection title="Über die App">
-        <AboutSection />
-      </CollapsibleSection>
+      <View style={styles.versionFooter}>
+        <Text style={styles.versionText}>Version {Constants.expoConfig?.version ?? '?'}</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -466,5 +465,14 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     marginBottom: 16,
     lineHeight: 20,
+  },
+  versionFooter: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    backgroundColor: 'transparent',
+  },
+  versionText: {
+    fontSize: 12,
+    opacity: 0.4,
   },
 });

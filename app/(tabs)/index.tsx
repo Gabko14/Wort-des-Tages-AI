@@ -8,22 +8,16 @@ import Toast from 'react-native-toast-message';
 
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
-import { StreakBadge } from '@/components/StreakBadge';
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { enrichWords } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
-import {
-  getCurrentStreak,
-  hasCompletedToday,
-  QuizCompletionResult,
-} from '@/services/gamificationService';
+import { QuizCompletionResult } from '@/services/gamificationService';
 import { refreshNotificationContent } from '@/services/notificationService';
 import { checkPremiumStatus } from '@/services/premiumService';
 import { loadSettings } from '@/services/settingsService';
 import { getOrGenerateTodaysWords } from '@/services/wordService';
 import { EnrichedWord } from '@/types/ai';
-import type { StreakData } from '@/types/gamification';
 
 export default function HomeScreen() {
   const [words, setWords] = useState<Wort[]>([]);
@@ -36,8 +30,6 @@ export default function HomeScreen() {
   const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>({});
   const [loadingMessage, setLoadingMessage] = useState('Lade Wörter des Tages...');
   const [loadingSeconds, setLoadingSeconds] = useState(0);
-  const [streak, setStreak] = useState<StreakData | null>(null);
-  const [completedToday, setCompletedToday] = useState(false);
 
   const loadWords = useCallback(async () => {
     try {
@@ -47,19 +39,6 @@ export default function HomeScreen() {
       setLoadingMessage('Lade Wörter des Tages...');
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);
-
-      // Load streak data (non-blocking)
-      Promise.all([getCurrentStreak(), hasCompletedToday()])
-        .then(([streakData, completed]) => {
-          setStreak(streakData);
-          setCompletedToday(completed);
-        })
-        .catch((err) => {
-          // Non-critical - log to Sentry for visibility
-          if (!__DEV__) {
-            Sentry.captureException(err, { tags: { feature: 'streak_loading' }, level: 'info' });
-          }
-        });
 
       // Refresh notification content with latest streak data (non-blocking)
       loadSettings()
@@ -167,10 +146,6 @@ export default function HomeScreen() {
   };
 
   const handleQuizComplete = useCallback((result: QuizCompletionResult) => {
-    // Update streak display
-    setStreak(result.streak);
-    setCompletedToday(true);
-
     // Show milestone celebration
     if (result.milestoneReached) {
       Toast.show({
@@ -218,10 +193,9 @@ export default function HomeScreen() {
             day: 'numeric',
           })}
         </Text>
-        {streak && <StreakBadge streak={streak} completedToday={completedToday} />}
       </View>
     ),
-    [streak, completedToday]
+    []
   );
 
   const ListEmpty = useMemo(() => <EmptyState />, []);
