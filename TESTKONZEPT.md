@@ -10,6 +10,8 @@
 | **Mittel**  | Wichtige Features  | Eingeschränkte Nutzung |
 | **Niedrig** | Nice-to-have       | Minimale Auswirkung    |
 
+bla bla bla
+
 ### Bewertung der Funktionseinheiten
 
 | Funktionseinheit               | Kritikalität | Begründung                          |
