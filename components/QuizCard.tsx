@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -6,15 +6,19 @@ import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/components/Button';
 import { Text, View, useThemeColor } from '@/components/Themed';
+import { recordQuizCompletion, QuizCompletionResult } from '@/services/gamificationService';
 import { Quiz, QuizOption } from '@/types/ai';
 
 interface QuizCardProps {
   quiz: Quiz;
+  wordId: number;
+  onQuizComplete?: (result: QuizCompletionResult) => void;
 }
 
-export function QuizCard({ quiz }: QuizCardProps) {
+export function QuizCard({ quiz, wordId, onQuizComplete }: QuizCardProps) {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const hasTrackedRef = useRef(false);
 
   const borderColor = useThemeColor({ light: '#e9ecef', dark: '#333' }, 'background');
   const correctColor = useThemeColor({ light: '#28a745', dark: '#5cb85c' }, 'background');
@@ -34,14 +38,28 @@ export function QuizCard({ quiz }: QuizCardProps) {
   const handleSubmit = useCallback(() => {
     if (selectedOptionId) {
       setShowResult(true);
+      const isCorrect = selectedOptionId === quiz.correctOptionId;
+
       // Trigger haptic feedback based on correctness
-      if (selectedOptionId === quiz.correctOptionId) {
+      if (isCorrect) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
+
+      // Track quiz completion (only once per quiz instance)
+      if (!hasTrackedRef.current) {
+        hasTrackedRef.current = true;
+        recordQuizCompletion(wordId, isCorrect)
+          .then((result) => {
+            onQuizComplete?.(result);
+          })
+          .catch(() => {
+            // Silent fail - gamification tracking is non-critical
+          });
+      }
     }
-  }, [selectedOptionId, quiz.correctOptionId]);
+  }, [selectedOptionId, quiz.correctOptionId, wordId, onQuizComplete]);
 
   const handleReset = useCallback(() => {
     setSelectedOptionId(null);
