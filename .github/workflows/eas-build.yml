@@ -6,9 +6,37 @@ on:
       - 'v*.*.*'
 
 jobs:
+  supabase-prod:
+    name: Deploy Supabase (Prod)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to Prod Project
+        run: supabase link --project-ref otiioifscvmgcsywiarz
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Push Database Migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy Edge Functions
+        run: supabase functions deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
   build:
     name: EAS Build (APK)
     runs-on: ubuntu-latest
+    needs: supabase-prod
     environment: integration
     permissions:
       contents: write

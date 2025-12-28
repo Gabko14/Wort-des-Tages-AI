@@ -5,7 +5,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-const adminSecret = Deno.env.get('ADMIN_SECRET');
 
 // Google Play API credentials
 const GOOGLE_PACKAGE_NAME = Deno.env.get('GOOGLE_PACKAGE_NAME');
@@ -204,45 +203,6 @@ serve(async (req) => {
   }
 
   const now = new Date().toISOString();
-
-  // Handle dev source - require admin secret
-  if (source === 'dev') {
-    const providedSecret = req.headers.get('X-Admin-Secret');
-    if (!adminSecret || providedSecret !== adminSecret) {
-      return new Response(JSON.stringify({ error: 'unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const payload: Partial<Entitlement> = {
-      device_id: deviceId,
-      is_premium: true,
-      premium_source: 'dev',
-      purchase_token: null,
-      subscription_id: null,
-      expires_at: null,
-      auto_renewing: false,
-      updated_at: now,
-    };
-
-    const { error } = await supabase
-      .from<Entitlement>('entitlements')
-      .upsert(payload, { onConflict: 'device_id' });
-
-    if (error) {
-      console.error('Database error:', error);
-      return new Response(JSON.stringify({ error: 'db_error' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
 
   // Handle Google Play source - validate purchase
   if (source === 'google_play') {

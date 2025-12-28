@@ -16,7 +16,12 @@
     "type-check": "tsc --noEmit",
     "prepare": "husky",
     "preversion": "npm run lint && npm run type-check && npm test",
-    "postversion": "node scripts/sync-version.js && git push && git push --tags -f"
+    "postversion": "node scripts/sync-version.js && git push && git push --tags -f",
+    "supabase:link:prod": "npx supabase link --project-ref otiioifscvmgcsywiarz",
+    "supabase:link:dev": "npx supabase link --project-ref dclszvpstwnkzqfjvxwa",
+    "supabase:push": "npx supabase db push",
+    "supabase:deploy": "npx supabase functions deploy",
+    "supabase:status": "npx supabase status"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
