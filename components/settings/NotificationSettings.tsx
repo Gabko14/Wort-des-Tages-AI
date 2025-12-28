@@ -1,4 +1,9 @@
-import { StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+
+import { Platform, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import { Button } from '@/components/Button';
 import { Text, View } from '@/components/Themed';
@@ -12,7 +17,18 @@ interface NotificationSettingsProps {
   testingNotification: boolean;
 }
 
-const TIME_OPTIONS = ['07:00', '08:00', '09:00', '10:00', '12:00', '18:00', '20:00'];
+function timeStringToDate(timeString: string): Date {
+  const [hours, minutes] = timeString.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
+function dateToTimeString(date: Date): string {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
 
 export function NotificationSettings({
   enabled,
@@ -22,6 +38,8 @@ export function NotificationSettings({
   onTest,
   testingNotification,
 }: NotificationSettingsProps) {
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
   return (
     <View style={styles.container}>
       <View style={styles.toggleRow}>
@@ -32,21 +50,42 @@ export function NotificationSettings({
       {enabled && (
         <View style={styles.timeSection}>
           <Text style={styles.timeSectionLabel}>Uhrzeit</Text>
-          <View style={styles.timeButtons}>
-            {TIME_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.timeButton, time === option && styles.timeButtonSelected]}
-                onPress={() => onTimeChange(option)}
-              >
-                <Text
-                  style={[styles.timeButtonText, time === option && styles.timeButtonTextSelected]}
-                >
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+
+          <TouchableOpacity
+            style={styles.timeDisplay}
+            onPress={() => setShowTimePicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Benachrichtigungszeit ${time} Uhr`}
+            accessibilityHint="Tippen um Zeit zu ändern"
+          >
+            <Ionicons name="time-outline" size={20} color="#007AFF" style={styles.timeIcon} />
+            <Text style={styles.timeText}>{time} Uhr</Text>
+            <Ionicons name="chevron-forward" size={20} color="#007AFF" />
+          </TouchableOpacity>
+
+          {showTimePicker && (
+            <DateTimePicker
+              value={timeStringToDate(time)}
+              mode="time"
+              is24Hour={true}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
+                setShowTimePicker(Platform.OS === 'ios');
+                if (event.type === 'set' && selectedDate) {
+                  onTimeChange(dateToTimeString(selectedDate));
+                }
+              }}
+            />
+          )}
+
+          {showTimePicker && Platform.OS === 'ios' && (
+            <Button
+              variant="primary"
+              onPress={() => setShowTimePicker(false)}
+              title="Fertig"
+              accessibilityLabel="Zeitauswahl abschließen"
+            />
+          )}
         </View>
       )}
 
@@ -88,29 +127,23 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     marginBottom: 8,
   },
-  timeButtons: {
+  timeDisplay: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    backgroundColor: 'transparent',
-    marginBottom: 16,
-  },
-  timeButton: {
-    paddingVertical: 8,
+    alignItems: 'center',
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: 'rgba(128, 128, 128, 0.3)',
-    backgroundColor: 'transparent',
+    borderRadius: 8,
+    marginBottom: 16,
   },
-  timeButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+  timeIcon: {
+    marginRight: 12,
   },
-  timeButtonText: {
-    fontSize: 14,
-  },
-  timeButtonTextSelected: {
-    color: '#fff',
+  timeText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

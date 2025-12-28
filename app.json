@@ -41,11 +41,10 @@
           "organization": "gibb-jw"
         }
       ],
-      "expo-iap"
+      "expo-iap",
+      "@react-native-community/datetimepicker"
     ],
-    "assetBundlePatterns": [
-      "assets/database/*"
-    ],
+    "assetBundlePatterns": ["assets/database/*"],
     "experiments": {
       "typedRoutes": true
     },

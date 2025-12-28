@@ -39,7 +39,6 @@ export default function SettingsScreen() {
     getCachedPremiumStatus()
   );
   const [testingNotification, setTestingNotification] = useState(false);
-  const [refreshingWords, setRefreshingWords] = useState(false);
 
   useEffect(() => {
     // Load premium status
@@ -277,31 +276,6 @@ export default function SettingsScreen() {
     setTestingNotification(false);
   };
 
-  const handleRefreshWords = async () => {
-    setRefreshingWords(true);
-    try {
-      await clearTodaysWords();
-      Toast.show({
-        type: 'success',
-        text1: 'Neue Wörter',
-        text2: 'Gehe zur Startseite, um die neuen Wörter zu sehen',
-      });
-    } catch (err) {
-      if (!__DEV__) {
-        Sentry.captureException(err, {
-          tags: { feature: 'word_refresh' },
-          level: 'error',
-        });
-      }
-      Toast.show({
-        type: 'error',
-        text1: 'Fehler',
-        text2: 'Wörter konnten nicht zurückgesetzt werden',
-      });
-    }
-    setRefreshingWords(false);
-  };
-
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -321,25 +295,14 @@ export default function SettingsScreen() {
       <CollapsibleSection title="Worteinstellungen" defaultExpanded>
         <WordCountSelector value={settings.wordCount} onChange={handleWordCountChange} />
 
-        <Button
-          variant="secondary"
-          onPress={handleRefreshWords}
-          title={refreshingWords ? 'Aktualisiere...' : 'Neue Wörter generieren'}
-          loading={refreshingWords}
-          disabled={refreshingWords}
-          icon="refresh-outline"
-          accessibilityLabel="Neue Wörter generieren"
-          accessibilityHint="Setzt die aktuellen Wörter zurück und generiert neue"
-        />
-        <Text style={styles.sectionHint}>Setzt die aktuellen Wörter zurück und generiert neue</Text>
-
         {/* Wortarten */}
         <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Wortarten</Text>
         <WordTypeToggles types={settings.wordTypes} onToggle={handleWordTypeToggle} />
 
         {/* Frequenzklasse */}
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Schwierigkeitsgrad</Text>
-        <FrequencySelector value={settings.frequencyRanges} onToggle={handleFrequencyToggle} />
+        <View style={{ marginTop: 24, backgroundColor: 'transparent' }}>
+          <FrequencySelector value={settings.frequencyRanges} onToggle={handleFrequencyToggle} />
+        </View>
       </CollapsibleSection>
 
       {/* Benachrichtigungen - nur außerhalb von Expo Go anzeigen */}
@@ -400,6 +363,13 @@ export default function SettingsScreen() {
 
       <View style={styles.versionFooter}>
         <Text style={styles.versionText}>Version {Constants.expoConfig?.version ?? '?'}</Text>
+        <Text style={styles.attributionText}>
+          Wortdaten: DWDS – Digitales Wörterbuch der deutschen Sprache
+        </Text>
+        <Text style={styles.attributionLink} onPress={() => Linking.openURL('https://www.dwds.de')}>
+          www.dwds.de
+        </Text>
+        <Text style={styles.licenseText}>Lizenziert unter CC BY-SA 4.0</Text>
       </View>
     </ScrollView>
   );
@@ -474,5 +444,22 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     opacity: 0.4,
+  },
+  attributionText: {
+    fontSize: 11,
+    opacity: 0.5,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  attributionLink: {
+    fontSize: 11,
+    opacity: 0.5,
+    textDecorationLine: 'underline',
+    marginTop: 2,
+  },
+  licenseText: {
+    fontSize: 10,
+    opacity: 0.4,
+    marginTop: 4,
   },
 });
