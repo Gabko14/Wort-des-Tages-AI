@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet } from 'react-native';
 
+import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import { useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
@@ -16,7 +17,7 @@ import { QuizCompletionResult } from '@/services/gamificationService';
 import { refreshNotificationContent } from '@/services/notificationService';
 import { checkPremiumStatus } from '@/services/premiumService';
 import { loadSettings } from '@/services/settingsService';
-import { getOrGenerateTodaysWords } from '@/services/wordService';
+import { clearTodaysWords, getOrGenerateTodaysWords } from '@/services/wordService';
 import { EnrichedWord } from '@/types/ai';
 
 export default function HomeScreen() {
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>({});
   const [loadingMessage, setLoadingMessage] = useState('Lade Wörter des Tages...');
   const [loadingSeconds, setLoadingSeconds] = useState(0);
+  const [regenerating, setRegenerating] = useState(false);
 
   const loadWords = useCallback(async () => {
     try {
@@ -165,6 +167,33 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const handleRegenerateWords = useCallback(async () => {
+    setRegenerating(true);
+    try {
+      await clearTodaysWords();
+      await loadWords(); // Immediately reload
+      Toast.show({
+        type: 'success',
+        text1: 'Neue Wörter generiert',
+        text2: 'Die Wörter wurden aktualisiert',
+      });
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'word_regenerate' },
+          level: 'error',
+        });
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'Fehler',
+        text2: 'Wörter konnten nicht aktualisiert werden',
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  }, [loadWords]);
+
   const renderItem = useCallback(
     ({ item, index }: { item: Wort; index: number }) => (
       <WordCard
@@ -200,6 +229,36 @@ export default function HomeScreen() {
 
   const ListEmpty = useMemo(() => <EmptyState />, []);
 
+  const ListFooter = useMemo(
+    () => (
+      <Pressable
+        onPress={handleRegenerateWords}
+        disabled={regenerating}
+        style={styles.regenerateButton}
+        accessibilityRole="button"
+        accessibilityLabel="Neue Wörter generieren"
+        accessibilityHint="Setzt die aktuellen Wörter zurück und generiert neue"
+      >
+        <View style={styles.regenerateContent}>
+          {regenerating ? (
+            <ActivityIndicator size="small" color="#007AFF" style={styles.regenerateIcon} />
+          ) : (
+            <Ionicons
+              name="refresh-outline"
+              size={16}
+              color="#007AFF"
+              style={styles.regenerateIcon}
+            />
+          )}
+          <Text style={styles.regenerateText}>
+            {regenerating ? 'Generiere neue Wörter...' : 'Neue Wörter generieren'}
+          </Text>
+        </View>
+      </Pressable>
+    ),
+    [regenerating, handleRegenerateWords]
+  );
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -224,6 +283,7 @@ export default function HomeScreen() {
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       ListHeaderComponent={ListHeader}
+      ListFooterComponent={ListFooter}
       ListEmptyComponent={ListEmpty}
       style={styles.scrollView}
       contentContainerStyle={styles.container}
@@ -266,5 +326,25 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     opacity: 0.6,
+  },
+  regenerateButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  regenerateContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  regenerateIcon: {
+    marginRight: 6,
+  },
+  regenerateText: {
+    fontSize: 14,
+    color: '#007AFF',
+    opacity: 0.7,
   },
 });
