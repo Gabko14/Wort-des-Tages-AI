@@ -69,6 +69,7 @@
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
     "react-test-renderer": "19.1.0",
+    "supabase": "^2.70.5",
     "typescript": "~5.9.2"
   },
   "private": true,

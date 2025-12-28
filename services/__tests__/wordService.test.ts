@@ -1,6 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import * as database from '../database';
 import * as settingsService from '../settingsService';
 import {
+  clearTodaysWords,
   getOrGenerateTodaysWords,
   getTodaysWords,
   saveTodaysWords,
@@ -62,8 +65,34 @@ describe('wordService', () => {
   });
 
   describe('getTodaysWords', () => {
-    it('should return empty array when no entry for today exists', async () => {
-      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2024-05-10T12:00:00Z'));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should return empty array when no cache exists', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+
+      const result = await getTodaysWords();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array when cache is for a different date', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ date: '2024-05-09', wordIds: [1, 2] })
+      );
+
+      const result = await getTodaysWords();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array when cache has invalid JSON', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce('not-json');
 
       const result = await getTodaysWords();
 
@@ -71,14 +100,9 @@ describe('wordService', () => {
     });
 
     it('should return words for today', async () => {
-      const todaysEntry = {
-        fk_wort1: 1,
-        fk_wort2: 2,
-        fk_wort3: 0,
-        fk_wort4: 0,
-        fk_wort5: 0,
-      };
-      mockDb.getFirstAsync.mockResolvedValueOnce(todaysEntry);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ date: '2024-05-10', wordIds: [1, 2] })
+      );
       mockDb.getAllAsync.mockResolvedValueOnce([mockWort, mockWort2]);
 
       const result = await getTodaysWords();
@@ -90,39 +114,25 @@ describe('wordService', () => {
       );
     });
 
-    it('should return empty array when all word IDs are 0', async () => {
-      const todaysEntry = {
-        fk_wort1: 0,
-        fk_wort2: 0,
-        fk_wort3: 0,
-        fk_wort4: 0,
-        fk_wort5: 0,
-      };
-      mockDb.getFirstAsync.mockResolvedValueOnce(todaysEntry);
+    it('should return empty array when wordIds is empty', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ date: '2024-05-10', wordIds: [] })
+      );
 
       const result = await getTodaysWords();
 
       expect(result).toEqual([]);
     });
 
-    it('should handle mixed valid and zero word IDs', async () => {
-      const todaysEntry = {
-        fk_wort1: 1,
-        fk_wort2: 0,
-        fk_wort3: 2,
-        fk_wort4: 0,
-        fk_wort5: 0,
-      };
-      mockDb.getFirstAsync.mockResolvedValueOnce(todaysEntry);
+    it('should preserve word order from cache', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ date: '2024-05-10', wordIds: [2, 1] })
+      );
       mockDb.getAllAsync.mockResolvedValueOnce([mockWort, mockWort2]);
 
       const result = await getTodaysWords();
 
-      expect(result).toEqual([mockWort, mockWort2]);
-      expect(mockDb.getAllAsync).toHaveBeenCalledWith(
-        'SELECT * FROM wort WHERE id IN (?,?)',
-        [1, 2]
-      );
+      expect(result).toEqual([mockWort2, mockWort]);
     });
   });
 
@@ -194,76 +204,72 @@ describe('wordService', () => {
   });
 
   describe('saveTodaysWords', () => {
-    it('should save words to database with padding zeros', async () => {
-      await saveTodaysWords([mockWort, mockWort2]);
-
-      expect(mockDb.runAsync).toHaveBeenCalled();
-      const callArgs = mockDb.runAsync.mock.calls[0];
-      expect(callArgs[0]).toContain('INSERT INTO wort_des_tages');
-      expect(callArgs[1].length).toBe(6);
-      expect(callArgs[1][2]).toBe(0);
-      expect(callArgs[1][3]).toBe(0);
-      expect(callArgs[1][4]).toBe(0);
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2024-05-10T12:00:00Z'));
     });
 
-    it('should handle more than 5 words by truncating', async () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should save words to AsyncStorage', async () => {
+      await saveTodaysWords([mockWort, mockWort2]);
+
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+        'daily_words',
+        JSON.stringify({ date: '2024-05-10', wordIds: [1, 2] })
+      );
+    });
+
+    it('should handle any number of words', async () => {
       const manyWords = [mockWort, mockWort2, mockWort, mockWort2, mockWort, mockWort2];
 
       await saveTodaysWords(manyWords);
 
-      const callArgs = mockDb.runAsync.mock.calls[0];
-      expect(callArgs[1].length).toBe(6);
-      expect(callArgs[1].slice(0, 5)).toEqual([1, 2, 1, 2, 1]);
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+        'daily_words',
+        JSON.stringify({ date: '2024-05-10', wordIds: [1, 2, 1, 2, 1, 2] })
+      );
     });
   });
 
   describe('clearTodaysWords', () => {
-    it('should delete todays entry from the database', async () => {
-      jest.useFakeTimers().setSystemTime(new Date('2024-05-10T12:00:00Z'));
-
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { clearTodaysWords } = require('../wordService');
+    it('should remove daily words from AsyncStorage', async () => {
       await clearTodaysWords();
 
-      expect(mockDb.runAsync).toHaveBeenCalledWith('DELETE FROM wort_des_tages WHERE date = ?', [
-        '2024-05-10',
-      ]);
-
-      jest.useRealTimers();
+      expect(AsyncStorage.removeItem).toHaveBeenCalledWith('daily_words');
     });
 
-    it('should wrap deletion errors in an AppError', async () => {
-      jest.useFakeTimers().setSystemTime(new Date('2024-05-11T12:00:00Z'));
-      mockDb.runAsync.mockRejectedValueOnce(new Error('db failure'));
+    it('should wrap errors in an AppError', async () => {
+      (AsyncStorage.removeItem as jest.Mock).mockRejectedValueOnce(new Error('storage failure'));
 
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { clearTodaysWords } = require('../wordService');
-
-      await expect(clearTodaysWords()).rejects.toMatchObject({ code: 'db_clear_failed' });
-
-      jest.useRealTimers();
+      await expect(clearTodaysWords()).rejects.toMatchObject({ code: 'storage_clear_failed' });
     });
   });
 
   describe('getOrGenerateTodaysWords', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2024-05-10T12:00:00Z'));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should return existing words if available', async () => {
-      mockDb.getFirstAsync.mockResolvedValueOnce({
-        fk_wort1: 1,
-        fk_wort2: 2,
-        fk_wort3: 0,
-        fk_wort4: 0,
-        fk_wort5: 0,
-      });
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ date: '2024-05-10', wordIds: [1, 2] })
+      );
       mockDb.getAllAsync.mockResolvedValueOnce([mockWort, mockWort2]);
 
       const result = await getOrGenerateTodaysWords();
 
       expect(result).toEqual([mockWort, mockWort2]);
-      expect(mockDb.runAsync).not.toHaveBeenCalled();
+      expect(AsyncStorage.setItem).not.toHaveBeenCalled();
     });
 
     it('should generate new words based on settings if none exist', async () => {
-      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
       mockDb.getAllAsync.mockResolvedValueOnce([mockWort, mockWort2]);
 
       const result = await getOrGenerateTodaysWords();
@@ -272,14 +278,14 @@ describe('wordService', () => {
       expect(settingsService.loadSettings).toHaveBeenCalled();
       expect(settingsService.getSelectedWordTypes).toHaveBeenCalled();
       expect(settingsService.getFrequencyClasses).toHaveBeenCalled();
-      expect(mockDb.runAsync).toHaveBeenCalled();
+      expect(AsyncStorage.setItem).toHaveBeenCalled();
     });
 
     it('should use settings for word count when generating', async () => {
       const customSettings = { ...mockSettings, wordCount: 5 };
       (settingsService.loadSettings as jest.Mock).mockResolvedValue(customSettings);
 
-      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
       mockDb.getAllAsync.mockResolvedValueOnce([
         mockWort,
         mockWort2,
@@ -295,13 +301,13 @@ describe('wordService', () => {
     });
 
     it('should return empty array if no words can be generated', async () => {
-      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
       mockDb.getAllAsync.mockResolvedValueOnce([]);
 
       const result = await getOrGenerateTodaysWords();
 
       expect(result).toEqual([]);
-      expect(mockDb.runAsync).not.toHaveBeenCalled();
+      expect(AsyncStorage.setItem).not.toHaveBeenCalled();
     });
   });
 });

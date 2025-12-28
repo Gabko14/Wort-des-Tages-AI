@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 
 import type { StreakData } from '@/types/gamification';
 

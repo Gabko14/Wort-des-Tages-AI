@@ -1,3 +1,5 @@
+import { TouchableOpacity } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
@@ -82,7 +84,7 @@ describe('CompactStreakBadge', () => {
       );
 
       // Should not have TouchableOpacity when onPress is not provided
-      const touchable = UNSAFE_queryByType(require('react-native').TouchableOpacity);
+      const touchable = UNSAFE_queryByType(TouchableOpacity);
       expect(touchable).toBeNull();
     });
   });
