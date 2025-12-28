@@ -1,16 +1,23 @@
-# CLAUDE.md (now AGENTS.md)
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) and other ai agents when working in this repository. Propose updates to AGENTS.md as the project evolves.
 
 ## Project Overview
 
 German "Word of the Day" mobile app built with Expo Router (React Native). Displays daily vocabulary words from a bundled SQLite database (DWDS). Premium users get AI-enriched word definitions via Supabase Edge Functions.
 
+## Mission
+
+Sprache als Werkzeug für Präzision, Überzeugung und Eloquenz schärfen.
+
+## Zielgruppe
+
+Menschen mit guten Deutschkenntnissen, die Sprache als Wettbewerbsvorteil nutzen wollen – um präziser zu denken, besser zu überzeugen und eloquenter aufzutreten.
+
 ## Non-Negotiables
 
 - **Offline-first must always work**: the local word database and basic app flow must function without network.
 - **Services throw, UI catches**: services never show UI, never `Alert.alert`, never navigate.
-- **Type safety over speed**: no `any`, no silent `as unknown as X` casts to "make it compile".
 - **No new dependencies by default**: add libs only when there is a clear, documented reason and a small API surface.
 
 ## Commands
@@ -18,9 +25,7 @@ German "Word of the Day" mobile app built with Expo Router (React Native). Displ
 ```bash
 npm test           # Run Jest tests
 npm run lint       # Check for linting errors
-npm run lint:fix   # Auto-fix linting/formatting
 npm run type-check # TypeScript validation
-npx expo install   # Install dependencies with version alignment
 ```
 
 ## Architecture
@@ -66,285 +71,97 @@ npx expo install   # Install dependencies with version alignment
 
 ## Error Handling
 
-### Rule of Thumb
+Services throw typed `AppError` (see `utils/appError.ts`). Screens catch and decide recovery/messaging.
 
-- **Services throw, UI catches**: service functions should throw a typed `AppError` (see `utils/appError.ts`) and let screens/components decide how to recover or show messaging.
-- **Never leave promises unhandled**: use `await` + `try/catch`, or attach `.catch()` for "fire-and-forget" calls.
-- **Render-time failures**: rely on Expo Router's error boundary (`app/_layout.tsx`) as a last-resort recovery screen.
+### User Feedback Pattern
 
-### User Feedback & Error Tracking
+```typescript
+catch (err) {
+  if (!__DEV__) Sentry.captureException(err, { tags: { feature: 'x' }, level: 'error' });
+  Toast.show({ type: 'error', text1: 'Title', text2: 'Message' });
+}
+```
 
-- **User feedback**: Toast notifications (`config/toastConfig.tsx`), never `Alert.alert` or `console.error`
-- **Production tracking**: Sentry in `app/_layout.tsx`, wrap all catch blocks:
-
-  ```typescript
-  catch (err) {
-    if (!__DEV__) Sentry.captureException(err, { tags: { feature: 'x' }, level: 'error' });
-    Toast.show({ type: 'error', text1: 'Title', text2: 'Message' });
-  }
-  ```
-
-Wrap unknown errors at boundaries:
-
-- **Service boundary**: convert raw errors → `AppError` using `asAppError()`
-- **UI boundary**: convert `AppError` → user-friendly message + fallback (cached/offline/disabled)
-
-### Supabase Config Behavior
-
-- In development (`__DEV__`), missing `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` throws at startup.
-- In production builds, missing Supabase config disables premium/AI features (app should still run offline for the local word database).
+Never use `Alert.alert` or `console.error` for user feedback. Use `asAppError()` at service boundaries to normalize errors.
 
 ## Code Patterns
 
 ### Database Access
 
-Always use `getDatabase()` singleton, never create new connections:
+Always use `getDatabase()` singleton. Keep SQL in services, not components. Use parameterized queries.
 
-```typescript
-import { getDatabase, Wort } from '@/services/database';
-
-const db = await getDatabase();
-// Use generic for type safety
-const words = await db.getAllAsync<Wort>('SELECT * FROM wort WHERE id = ?', [id]);
+```bash
+sqlite3 assets/database/dwds.db  # for direct database inspection or manual edits
 ```
 
-**Do:**
-
-- Use parameterized queries (no string interpolation for user-controlled values)
-- Keep SQL in services, not in components
-- Return domain objects (typed) rather than raw rows when logic grows
-
-**Don't:**
-
-- Run heavy queries on every render
-- Store DB rows directly in global state without shaping/normalizing
-
-### Component Structure
-
-Use named exports and `StyleSheet.create`:
-
-```typescript
-import { StyleSheet, View, Text } from 'react-native';
-
-interface WordCardProps {
-  word: string;
-  definition: string;
-}
-
-export function WordCard({ word, definition }: WordCardProps) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.title}>{word}</Text>
-      <Text style={styles.body}>{definition}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  card: { padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 18, fontWeight: 'bold' },
-  body: { fontSize: 14, color: '#333' },
-});
-```
+**Tables:** `wort` – 258k words with lemma, wortklasse, frequenzklasse (0=rare, 6=common), DWDS URL
 
 ### Component Exports
 
-- **Named exports** for reusable components: `export function WordCard()`
-- **Default exports** only for screens (Expo Router requirement): `export default function HomeScreen()`
+- **Named exports** for components: `export function WordCard()`
+- **Default exports** only for screens (Expo Router requirement)
 
-### Path Alias
+### Navigation
 
-Use `@/` for all non-relative imports:
-
-```typescript
-import { WordCard } from '@/components/WordCard';
-import { Wort } from '@/services/database';
-```
-
-### Expo Router & Navigation
-
-**Do:**
-
-- Use typed routes (`Href<T>`) for navigation safety
-- Use `<Link href="/path" />` for static navigation links (better accessibility)
-- Use `router.push()` or `router.replace()` only inside event handlers or callbacks
-- Use `useLocalSearchParams` for accessing route parameters
-- Use route params as strings and parse/validate them at the screen boundary
-
-**Don't:**
-
-- Use React Navigation props (`navigation.navigate`) directly; stick to Expo Router paradigms
-- Depend on implicit navigation state to compute data (make it explicit via params)
+Use Expo Router paradigms (`<Link>`, `router.push()`, `useLocalSearchParams`). Don't use React Navigation props directly. Parse route params as strings at the screen boundary.
 
 ### Hooks and State
 
-**Do:**
-
-- Keep screens thin: compose hooks + components, call services inside hooks/effects
-- Use `useMemo`/`useCallback` only when there is a measurable reason (avoid cargo-cult memoization)
-- Prefer derived state over duplicated state
-- Use strict dependency arrays in `useEffect` and `useCallback`
-
-**Don't:**
-
-- Put network/DB calls directly in render
-- Store "computed" values in state unless needed for user interaction
+Keep screens thin: compose hooks + components, call services inside hooks/effects. Prefer derived state.
 
 ### Caching Strategy
 
-- **AsyncStorage** is for small JSON and caches only (not large datasets)
-- Cache keys should be stable and descriptive:
-  - Current pattern: `enriched_words_${sortedWordIds.join('-')}`
-- Always define invalidation rules:
-  - TTL for AI responses (or manual invalidation version bump)
-  - Premium status cache should have a short TTL and be revalidated
+AsyncStorage for small JSON only. Cache keys should be stable and descriptive:
+
+- Pattern: `enriched_words_${sortedWordIds.join('-')}`
+- Define invalidation rules (TTL or version bump)
+- Premium status cache: short TTL, revalidate often
 
 ### Supabase Edge Functions
 
-The Supabase CLI is not set up. The `supabase/` folder is reference code only. Use the Supabase MCP tools to deploy Edge Functions and apply migrations.
+Edge Functions use Deno runtime with ESM imports. Located in `supabase/functions/`.
 
-Edge Functions use Deno runtime with ESM imports. Located in `supabase/functions/`:
-
-```typescript
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-
-serve(async (req) => {
-  // Validate inputs, return 400 for invalid payloads
-  return new Response(JSON.stringify({ data: '...' }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-});
-```
-
-**Do:**
-
-- Validate inputs (JSON schema or manual checks) and return `400` for invalid payloads
-- Verify auth/entitlements server-side (never trust the client)
-- Add basic rate limiting / abuse controls where feasible
-- Shape output; don't return raw OpenAI responses with unnecessary metadata
-
-**Don't:**
-
-- Expose `SUPABASE_SERVICE_ROLE_KEY` to the client (ever)
-- Log secrets or full request payloads that may contain identifiers
+- Validate inputs server-side, return `400` for invalid payloads
+- Verify entitlements server-side (never trust the client)
+- Shape output; don't return raw OpenAI responses
+- Never expose `SUPABASE_SERVICE_ROLE_KEY` to client
 
 ## Performance
 
 ### Lists
 
-For long or dynamic lists, use virtualized list components:
-
-- **Prefer `<FlashList>`** (from `@shopify/flash-list`) when needed - significantly faster than FlatList. Install it when list performance becomes an issue.
-- If using `<FlatList>`, optimize with these props:
-
-```typescript
-<FlatList
-  data={words}
-  renderItem={renderItem}
-  keyExtractor={keyExtractor}
-  getItemLayout={getItemLayout}      // Pre-calculate item sizes
-  initialNumToRender={10}            // Reduce initial render count
-  maxToRenderPerBatch={5}            // Control batch rendering
-  windowSize={5}                     // Limit items in memory
-  removeClippedSubviews={true}       // Free memory for off-screen items
-/>
-```
-
-- Avoid `<ScrollView>` with `.map()` for large dynamic lists (acceptable for small, fixed-size lists)
+Prefer `<FlashList>` for long lists. If using `<FlatList>`, apply standard virtualization optimizations. Avoid `<ScrollView>` with `.map()` for dynamic data.
 
 ### Images
 
-When adding network images, prefer `expo-image` over React Native's built-in `Image` (better caching/performance). Install it when needed:
-
-```typescript
-import { Image } from 'expo-image';
-
-<Image
-  source={{ uri: imageUrl }}
-  style={{ width: 200, height: 200 }}
-  contentFit="cover"
-  placeholder={blurhash}
-  transition={200}
-/>
-```
+Use `expo-image` over React Native's `Image` when adding network images.
 
 ### General
 
-**Do:**
-
-- Use `keyExtractor` with stable unique IDs (never array index)
-- Debounce expensive operations triggered by text input
-- Keep JSON payloads small (especially from Edge Functions)
-- Define styles with `StyleSheet.create` outside components
-
-**Don't:**
-
-- Use inline functions in `renderItem` (recreated every render)
-- Use inline style objects for complex styles (performance penalty)
-- Recompute "word of the day" on every app start if it can be persisted with a date key
-- Fetch AI enrichment repeatedly when a cached value exists and is valid
-- Leave `console.log` in production code
+Debounce expensive text input operations. Keep Edge Function payloads small. Persist "word of the day" with date key instead of recomputing. Use cached AI responses when valid.
 
 ## Styling & UI
 
-**Do:**
+Use `StyleSheet.create`. Respect safe areas. Handle loading/empty states. Test on multiple screen sizes.
 
-- Respect platform safe areas (use safe area components where needed)
-- Ensure touch targets are large enough (minimum 44x44 points) and accessible
-- Use loading skeletons/spinners for async states; always handle empty states
-- Test on both small and large screens
+## TypeScript
 
-**Don't:**
-
-- Block the UI thread with heavy computation in render
-- Assume a single device size
-
-## TypeScript Rules
-
-**Do:**
-
-- Use strict typing for all props and state
-- Use `interface` for object shapes, `type` for unions/intersections
-- Define children explicitly: `children: React.ReactNode`
-- Use generics in database calls: `db.getAllAsync<Wort>(...)`
-
-**Don't:**
-
-- Use `any` - use `unknown` if necessary and narrow the type
-- Use silent `as unknown as X` casts to bypass type errors
+Strict typing, no `any`, no silent casts. Use generics in DB calls: `db.getAllAsync<Wort>(...)`.
 
 ## Security & Privacy
 
-### Sensitive Data Storage
+| Data Type                  | Storage             | Notes                  |
+| -------------------------- | ------------------- | ---------------------- |
+| User preferences, UI state | AsyncStorage        | Fine for non-sensitive |
+| Auth tokens, API keys      | `expo-secure-store` | Install when needed    |
+| Premium status cache       | AsyncStorage        | Just UX optimization   |
+| Payment info               | Never store locally | Server-side only       |
 
-| Data Type                  | Storage                | Notes                                                   |
-| -------------------------- | ---------------------- | ------------------------------------------------------- |
-| User preferences, UI state | AsyncStorage ✅        | Unencrypted, fine for non-sensitive                     |
-| Auth tokens, API keys      | `expo-secure-store` ✅ | Encrypted, uses Keychain/Keystore (install when needed) |
-| Premium status cache       | AsyncStorage ✅        | Not sensitive, just UX optimization                     |
-| Passwords                  | `expo-secure-store` ✅ | Or don't store at all (install when needed)             |
-| Payment info               | Never store locally ❌ | Handle server-side only                                 |
-
-### General Rules
-
-- Treat device identifiers and entitlement tokens as sensitive
-- Edge Functions must enforce entitlement checks; client checks are only for UX
-- Never print private tokens in logs; be careful with `console.log` in production
-- Avoid storing anything in AsyncStorage that would be harmful if extracted
+Edge Functions must enforce entitlement checks; client checks are only for UX. Never log tokens.
 
 ## Testing
 
-**Do:**
-
-- Unit test service logic (word selection, filtering, caching, error mapping)
-- Mock SQLite and Supabase clients at the boundary
-- Prefer deterministic tests (avoid time-based flakiness; mock `Date` when needed)
-- Test behavior, not implementation details
-
-**Don't:**
-
-- Snapshot-test large UI trees unless there is a strong reason
-- Leave tests that depend on real network or timing
+Unit test service logic. Mock SQLite and Supabase at the boundary. Mock `Date` for determinism.
 
 ## Environment Variables
 
@@ -358,45 +175,17 @@ Edge Functions require (set in Supabase dashboard):
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENAI_API_KEY`
 
-## CI/CD
-
-- Push/PR → CI runs (Lint, Tests, Type-Check)
-- Tag `v*.*.*` → New APK build via GitHub Actions
-- OTA updates can be done manually with `eas update --branch preview`
-
----
-
 ## Workflow Guidelines
 
-### When Editing Code
+### When Editing
 
-**Do:**
+Keep changes small and focused. Update types alongside implementation. Don't change service signatures without updating callers and tests.
 
-- Keep changes small and focused; avoid drive-by refactors
-- Update types alongside implementation
-- Prefer explicitness over cleverness (readability wins)
+### When Adding Features
 
-**Don't:**
+Add service method → hook → UI. Define failure modes and offline fallback upfront. Don't make premium a hard dependency for core app flow.
 
-- Change public function signatures in services without updating all callers and tests
-- Introduce new global singletons beyond the existing service patterns
-
-### When Adding a New Feature
-
-**Do:**
-
-- Add a service method first, then a hook, then UI
-- Define failure modes and offline fallback upfront
-- Add analytics/logging only if it is privacy-safe and actionable
-
-**Don't:**
-
-- Build features that require login if the product model is device-entitlement based
-- Make premium a hard dependency for the core app flow
-
-### Before Finishing a Task
-
-Run:
+### Before Finishing
 
 ```bash
 npm run lint
@@ -404,9 +193,9 @@ npm run type-check
 npm test  # when relevant
 ```
 
-And confirm:
+Confirm:
 
-- [ ] App still works with no network (offline-first)
-- [ ] Missing Supabase config in production mode disables premium/AI gracefully
+- [ ] App works offline
+- [ ] Missing Supabase config disables premium/AI gracefully
 - [ ] No new warnings or noisy logs
-- [ ] Types are complete (no new `any` or type errors)
+- [ ] Types complete (no `any` or errors)
