@@ -1,5 +1,6 @@
 export type AppErrorCode =
   | 'db_clear_failed'
+  | 'storage_clear_failed'
   | 'supabase_not_configured'
   | 'supabase_invoke_failed'
   | 'ai_enrich_failed'

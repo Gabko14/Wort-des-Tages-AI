@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { getDatabase, Wort } from '@/services/database';
 import {
   AppSettings,
@@ -7,48 +9,47 @@ import {
 } from '@/services/settingsService';
 import { AppError } from '@/utils/appError';
 
+const DAILY_WORDS_KEY = 'daily_words';
+
+interface DailyWordsCache {
+  date: string;
+  wordIds: number[];
+}
+
 function getTodayDateString(): string {
   const today = new Date();
   return today.toISOString().split('T')[0];
 }
 
 export async function getTodaysWords(): Promise<Wort[]> {
-  const db = await getDatabase();
   const today = getTodayDateString();
 
-  const todaysEntry = await db.getFirstAsync<{
-    fk_wort1: number;
-    fk_wort2: number;
-    fk_wort3: number;
-    fk_wort4: number;
-    fk_wort5: number;
-  }>('SELECT * FROM wort_des_tages WHERE date = ?', [today]);
-
-  if (!todaysEntry) {
+  const stored = await AsyncStorage.getItem(DAILY_WORDS_KEY);
+  if (!stored) {
     return [];
   }
 
-  const wordIds = [
-    todaysEntry.fk_wort1,
-    todaysEntry.fk_wort2,
-    todaysEntry.fk_wort3,
-    todaysEntry.fk_wort4,
-    todaysEntry.fk_wort5,
-  ].filter((id) => id > 0);
-
-  if (wordIds.length === 0) {
+  let cache: DailyWordsCache;
+  try {
+    cache = JSON.parse(stored);
+  } catch {
     return [];
   }
 
-  const placeholders = wordIds.map(() => '?').join(',');
+  if (cache.date !== today || !cache.wordIds?.length) {
+    return [];
+  }
+
+  const db = await getDatabase();
+  const placeholders = cache.wordIds.map(() => '?').join(',');
   const words = await db.getAllAsync<Wort>(
     `SELECT * FROM wort WHERE id IN (${placeholders})`,
-    wordIds
+    cache.wordIds
   );
 
-  // Preserve the order from fk_wort1, fk_wort2, etc.
+  // Preserve the stored order
   const wordsById = new Map(words.map((w) => [w.id, w]));
-  return wordIds.map((id) => wordsById.get(id)).filter((w): w is Wort => w !== undefined);
+  return cache.wordIds.map((id) => wordsById.get(id)).filter((w): w is Wort => w !== undefined);
 }
 
 export interface WordSelectionOptions {
@@ -83,19 +84,12 @@ export async function selectRandomWords(options: WordSelectionOptions): Promise<
 }
 
 export async function saveTodaysWords(words: Wort[]): Promise<void> {
-  const db = await getDatabase();
   const today = getTodayDateString();
-
-  const wordIds = words.map((w) => w.id);
-  while (wordIds.length < 5) {
-    wordIds.push(0);
-  }
-
-  await db.runAsync(
-    `INSERT INTO wort_des_tages (fk_wort1, fk_wort2, fk_wort3, fk_wort4, fk_wort5, date) 
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [...wordIds.slice(0, 5), today]
-  );
+  const cache: DailyWordsCache = {
+    date: today,
+    wordIds: words.map((w) => w.id),
+  };
+  await AsyncStorage.setItem(DAILY_WORDS_KEY, JSON.stringify(cache));
 }
 
 function buildSelectionOptions(settings: AppSettings): WordSelectionOptions {
@@ -127,12 +121,10 @@ export async function getOrGenerateTodaysWords(): Promise<Wort[]> {
 
 export async function clearTodaysWords(): Promise<void> {
   try {
-    const db = await getDatabase();
-    const today = getTodayDateString();
-    await db.runAsync('DELETE FROM wort_des_tages WHERE date = ?', [today]);
+    await AsyncStorage.removeItem(DAILY_WORDS_KEY);
   } catch (err) {
     throw new AppError(
-      'db_clear_failed',
+      'storage_clear_failed',
       'Wörter des Tages konnten nicht zurückgesetzt werden.',
       err
     );

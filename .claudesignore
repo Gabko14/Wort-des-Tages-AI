@@ -1,0 +1,13 @@
+# Database
+assets/database/*.db
+
+# Lock files (usually noise for AI context)
+package-lock.json
+yarn.lock
+
+# Documentation assets
+docs/screenshots/
+
+# Expo builds
+dist/
+.expo/
