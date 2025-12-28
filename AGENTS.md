@@ -23,9 +23,16 @@ Menschen mit guten Deutschkenntnissen, die Sprache als Wettbewerbsvorteil nutzen
 ## Commands
 
 ```bash
-npm test           # Run Jest tests
-npm run lint       # Check for linting errors
-npm run type-check # TypeScript validation
+npm test               # Run Jest tests
+npm run lint           # Check for linting errors
+npm run type-check     # TypeScript validation
+
+# Supabase
+npm run supabase:link:dev   # Link CLI to development project
+npm run supabase:link:prod  # Link CLI to production project
+npm run supabase:push       # Apply migrations to linked project
+npm run supabase:deploy     # Deploy Edge Functions to linked project
+npm run supabase:status     # Show currently linked project
 ```
 
 ## Architecture
@@ -125,6 +132,61 @@ Edge Functions use Deno runtime with ESM imports. Located in `supabase/functions
 - Verify entitlements server-side (never trust the client)
 - Shape output; don't return raw OpenAI responses
 - Never expose `SUPABASE_SERVICE_ROLE_KEY` to client
+
+### Supabase Multi-Project Setup
+
+We use two separate Supabase projects to isolate production from development/preview:
+
+| Environment | Project Ref            | Usage                   |
+| ----------- | ---------------------- | ----------------------- |
+| Production  | `otiioifscvmgcsywiarz` | Live app, real users    |
+| Development | `dclszvpstwnkzqfjvxwa` | Local dev, EAS previews |
+
+**Switching Projects:**
+
+```bash
+npm run supabase:link:prod   # Link to production
+npm run supabase:link:dev    # Link to development
+```
+
+**Deploying Changes:**
+
+```bash
+# 1. Link to target project
+npm run supabase:link:dev
+
+# 2. Push database migrations
+npm run supabase:push
+
+# 3. Deploy Edge Functions
+npm run supabase:deploy
+```
+
+**Important Workflow Rules:**
+
+1. **Always deploy to dev first** — test migrations and functions before touching production
+2. **Migrations are append-only** — never edit existing migration files; create new ones
+3. **Edge Function secrets are per-project** — set `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, etc. in each project's dashboard
+4. **Client credentials differ per environment** — update `.env.local` with the correct project's URL and anon key when switching
+
+**Creating New Migrations:**
+
+```bash
+npx supabase migration new <descriptive_name>
+# Edit the generated file in supabase/migrations/
+npm run supabase:push  # Apply to currently linked project
+```
+
+**CI/CD Automation:**
+
+Supabase deployments are fully automated via GitHub Actions:
+
+| Trigger                | Target       | Workflow                               |
+| ---------------------- | ------------ | -------------------------------------- |
+| PR / non-main branch   | Dev project  | `ci.yml` (only if `supabase/` changed) |
+| Version tag (`v*.*.*`) | Prod project | `eas-build.yml` (before EAS build)     |
+
+For local testing before pushing, use `npm run supabase:link:dev` + `npm run supabase:push`.
 
 ## Performance
 

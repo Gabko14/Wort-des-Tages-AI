@@ -38,6 +38,18 @@ npm install
 npm start
 ```
 
+### Premium für Tests aktivieren
+
+Im Dev-Modus wird die Device-ID beim Start in der Konsole geloggt. Um Premium zu aktivieren:
+
+1. App starten und Device-ID aus den Logs kopieren: `Device ID: abc123...`
+2. SQL Editor im **Dev-Projekt** im Supabase Dashboard öffnen
+3. Ausführen:
+   ```sql
+   INSERT INTO entitlements (device_id, is_premium, premium_source)
+   VALUES ('deine-device-id', true, 'dev');
+   ```
+
 ## 👨‍💻 Code-Richtlinien
 
 ### Standards

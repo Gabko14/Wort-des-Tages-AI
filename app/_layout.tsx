@@ -14,6 +14,7 @@ import Toast from 'react-native-toast-message';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { createToastConfig } from '@/config/toastConfig';
+import { getDeviceId } from '@/services/deviceService';
 
 Sentry.init({
   dsn: 'https://15da37c2bf720544afe0ee42d1a3b875@o4510534734774272.ingest.de.sentry.io/4510534737199184',
@@ -99,6 +100,12 @@ export default Sentry.wrap(function RootLayout() {
       void SplashScreen.hideAsync().catch(() => {});
     }
   }, [loaded]);
+
+  useEffect(() => {
+    if (__DEV__) {
+      getDeviceId().then((id) => console.log('Device ID:', id));
+    }
+  }, []);
 
   if (!loaded) {
     return null;

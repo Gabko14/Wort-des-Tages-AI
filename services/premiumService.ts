@@ -63,14 +63,7 @@ export async function checkPremiumStatus(): Promise<PremiumStatus> {
   return status;
 }
 
-interface GrantPremiumOptions {
-  adminSecret?: string;
-}
-
-export async function grantPremium(
-  source: 'dev' | 'google_play' | 'apple' = 'dev',
-  options?: GrantPremiumOptions
-): Promise<boolean> {
+export async function grantPremium(source: 'google_play' | 'apple'): Promise<boolean> {
   if (!supabase) {
     throw new AppError('supabase_not_configured', 'Premium kann nicht aktiviert werden.');
   }
@@ -79,17 +72,8 @@ export async function grantPremium(
   let error: unknown;
 
   try {
-    const client = supabase;
-
-    // Build headers for dev access with admin secret
-    const headers: Record<string, string> = {};
-    if (source === 'dev' && options?.adminSecret) {
-      headers['X-Admin-Secret'] = options.adminSecret;
-    }
-
-    const result = await client.functions.invoke('grant-premium', {
+    const result = await supabase.functions.invoke('grant-premium', {
       body: { deviceId, source },
-      headers,
     });
     error = result.error;
   } catch (err) {
