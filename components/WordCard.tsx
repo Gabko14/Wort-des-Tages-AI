@@ -130,18 +130,66 @@ export function WordCard({
       </View>
       {isExpanded && (
         <>
+          {/* Statt X, sag Y - the hook */}
+          {enriched?.stattXSagY && (
+            <View style={styles.hookSection}>
+              <Text style={styles.hookText}>{enriched.stattXSagY}</Text>
+            </View>
+          )}
+
+          {/* Definition */}
           {enriched?.definition && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Definition</Text>
               <Text style={styles.sectionText}>{enriched.definition}</Text>
             </View>
           )}
-          {enriched?.exampleSentence && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Beispielsatz</Text>
-              <Text style={styles.sectionText}>{enriched.exampleSentence}</Text>
+
+          {/* Register badge */}
+          {enriched?.register && (
+            <View style={[styles.registerBadge, { borderColor }]}>
+              <Text style={styles.registerText}>{enriched.register}</Text>
             </View>
           )}
+
+          {/* Collocations */}
+          {enriched?.collocations && enriched.collocations.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Typische Verbindungen</Text>
+              <View style={styles.collocationContainer}>
+                {enriched.collocations.map((collocation, i) => (
+                  <View
+                    key={i}
+                    style={[styles.collocationChip, { backgroundColor: accentColor + '20' }]}
+                  >
+                    <Text style={[styles.collocationText, { color: accentColor }]}>
+                      {collocation}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Example sentences - handle both new array and legacy single string */}
+          {(
+            enriched?.exampleSentences ??
+            (enriched?.exampleSentence ? [enriched.exampleSentence] : null)
+          )?.length ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {(enriched?.exampleSentences?.length ?? 1) > 1 ? 'Beispielsätze' : 'Beispielsatz'}
+              </Text>
+              {(enriched?.exampleSentences ?? [enriched?.exampleSentence])
+                .filter(Boolean)
+                .map((sentence, i) => (
+                  <Text key={i} style={[styles.sectionText, i > 0 && styles.exampleSpacing]}>
+                    {sentence}
+                  </Text>
+                ))}
+            </View>
+          ) : null}
+
           {aiLoading && !enriched && <StardustLoader />}
           {aiError && !enriched && !aiLoading && (
             <Text style={styles.errorText}>KI nicht verfügbar</Text>
@@ -191,6 +239,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
   },
+  hookSection: {
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(128, 128, 128, 0.1)',
+  },
+  hookText: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
   section: {
     marginBottom: 12,
     backgroundColor: 'transparent',
@@ -203,6 +264,39 @@ const styles = StyleSheet.create({
   sectionText: {
     fontSize: 14,
     opacity: 0.9,
+  },
+  exampleSpacing: {
+    marginTop: 8,
+  },
+  registerBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  registerText: {
+    fontSize: 12,
+    fontWeight: '500',
+    opacity: 0.8,
+  },
+  collocationContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+    backgroundColor: 'transparent',
+  },
+  collocationChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  collocationText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   errorText: {
     fontSize: 14,

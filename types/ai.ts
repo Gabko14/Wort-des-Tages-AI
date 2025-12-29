@@ -12,8 +12,13 @@ export interface Quiz {
 export interface EnrichedWord {
   wordId: number;
   definition?: string;
-  exampleSentence?: string;
+  exampleSentences?: string[];
   quiz?: Quiz;
+  stattXSagY?: string;
+  collocations?: string[];
+  register?: string;
+  // Legacy field for backward compatibility with cached data
+  exampleSentence?: string;
 }
 
 export interface AiEnrichResponse {
