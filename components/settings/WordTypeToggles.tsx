@@ -23,6 +23,14 @@ export function WordTypeToggles({ types, onToggle }: WordTypeTogglesProps) {
         <Text style={styles.toggleLabel}>Adjektive</Text>
         <Switch value={types.adjektiv} onValueChange={() => onToggle('adjektiv')} />
       </View>
+      <View style={styles.toggleRow}>
+        <Text style={styles.toggleLabel}>Mehrwortausdrücke</Text>
+        <Switch value={types.mehrwortausdruck} onValueChange={() => onToggle('mehrwortausdruck')} />
+      </View>
+      <View style={styles.toggleRow}>
+        <Text style={styles.toggleLabel}>Adverbien</Text>
+        <Switch value={types.adverb} onValueChange={() => onToggle('adverb')} />
+      </View>
     </View>
   );
 }

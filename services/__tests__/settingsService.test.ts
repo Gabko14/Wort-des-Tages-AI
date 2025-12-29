@@ -105,9 +105,11 @@ describe('settingsService', () => {
         substantiv: true,
         verb: false,
         adjektiv: true,
+        mehrwortausdruck: false,
+        adverb: true,
       });
 
-      expect(wordTypes).toEqual(['Substantiv', 'Adjektiv']);
+      expect(wordTypes).toEqual(['Substantiv', 'Adjektiv', 'Adverb']);
     });
   });
 });
