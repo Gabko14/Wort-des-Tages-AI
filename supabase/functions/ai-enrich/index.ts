@@ -44,8 +44,11 @@ type Quiz = {
 type EnrichedWord = {
   wordId: number;
   definition: string;
-  exampleSentence: string;
+  exampleSentences: string[];
   quiz: Quiz;
+  stattXSagY: string;
+  collocations: string[];
+  register: string;
 };
 
 async function isPremium(deviceId: string): Promise<boolean> {
@@ -64,30 +67,40 @@ async function isPremium(deviceId: string): Promise<boolean> {
 
 async function enrichWords(words: Wort[]): Promise<EnrichedWord[]> {
   const systemPrompt = `
-Du bist ein Assistent, der deutsche Woerter fuer Lernende erklaert und Multiple-Choice-Fragen erstellt.
+Du bist ein Assistent, der deutsche Woerter fuer Lernende erklaert.
+Ziel: Dem Nutzer helfen, praesize und eloquent zu kommunizieren.
+
 Liefere ein JSON-Objekt mit dem Schema:
 {
   "enrichedWords": [
     {
       "wordId": number,
-      "definition": "kurze, einfache Erklaerung auf Deutsch",
-      "exampleSentence": "Beispielsatz auf Deutsch, der das Wort zeigt",
+      "stattXSagY": "Statt 'gut' sag 'vorzueglich'",
+      "definition": "kurze, praezise Erklaerung (1-2 Saetze)",
+      "register": "gehoben" | "formell" | "neutral" | "umgangssprachlich",
+      "collocations": ["haeufige Wortverbindung 1", "haeufige Wortverbindung 2"],
+      "exampleSentences": ["Beispielsatz 1", "Beispielsatz 2"],
       "quiz": {
-        "question": "Frage zum Wort (z.B. Bedeutung, Verwendung oder Kontext)",
+        "question": "Frage zum Wort",
         "options": [
-          { "id": "a", "text": "Antwortmoeglichkeit A" },
-          { "id": "b", "text": "Antwortmoeglichkeit B" },
-          { "id": "c", "text": "Antwortmoeglichkeit C" },
-          { "id": "d", "text": "Antwortmoeglichkeit D" }
+          { "id": "a", "text": "Option A" },
+          { "id": "b", "text": "Option B" },
+          { "id": "c", "text": "Option C" },
+          { "id": "d", "text": "Option D" }
         ],
         "correctOptionId": "a"
       }
     }
   ]
 }
-Erklaerungen sollen knapp, praezise und alltagsnah sein.
-Die Quiz-Frage soll das Verstaendnis des Wortes testen (z.B. "Was bedeutet...?", "In welchem Kontext wird ... verwendet?").
-Die Antwortmoeglichkeiten sollen plausibel sein, aber nur eine ist richtig. Keine weiteren Felder.`;
+
+Wichtige Hinweise:
+- stattXSagY: Zeige ein alltaegliches Wort, das durch dieses ersetzt werden kann. Format: "Statt 'X' sag 'Y'"
+- definition: Knapp und praezise, fokussiert auf den Mehrwert gegenueber Synonymen
+- register: Wann/wo wird das Wort verwendet? (gehoben, formell, neutral, umgangssprachlich)
+- collocations: 2-3 typische Wortverbindungen, die natuerlich klingen
+- exampleSentences: 2 Saetze aus unterschiedlichen Kontexten (Beruf, Alltag, Schreiben)
+- quiz: Teste Verstaendnis oder korrekte Verwendung. Plausible Ablenkungen.`;
 
   const userPrompt = JSON.stringify({
     words: words.map((w) => ({
