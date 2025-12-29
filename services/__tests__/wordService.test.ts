@@ -45,6 +45,8 @@ const mockSettings: settingsService.AppSettings = {
     substantiv: true,
     verb: true,
     adjektiv: true,
+    mehrwortausdruck: true,
+    adverb: true,
   },
   frequencyRanges: ['mittel'],
   notificationsEnabled: false,

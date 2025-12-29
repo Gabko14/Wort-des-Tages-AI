@@ -12,6 +12,8 @@ export interface AppSettings {
     substantiv: boolean;
     verb: boolean;
     adjektiv: boolean;
+    mehrwortausdruck: boolean;
+    adverb: boolean;
   };
   frequencyRanges: FrequencyRange[];
   notificationsEnabled: boolean;
@@ -24,8 +26,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
     substantiv: true,
     verb: true,
     adjektiv: true,
+    mehrwortausdruck: true,
+    adverb: true,
   },
-  frequencyRanges: ['mittel'],
+  frequencyRanges: ['mittel', 'haeufig'],
   notificationsEnabled: false,
   notificationTime: '09:00',
 };
@@ -88,5 +92,7 @@ export function getSelectedWordTypes(wordTypes: AppSettings['wordTypes']): strin
   if (wordTypes.substantiv) types.push('Substantiv');
   if (wordTypes.verb) types.push('Verb');
   if (wordTypes.adjektiv) types.push('Adjektiv');
+  if (wordTypes.mehrwortausdruck) types.push('Mehrwortausdruck');
+  if (wordTypes.adverb) types.push('Adverb');
   return types;
 }
