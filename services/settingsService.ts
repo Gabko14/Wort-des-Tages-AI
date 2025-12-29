@@ -4,7 +4,12 @@ import { AppError } from '@/utils/appError';
 
 const SETTINGS_KEY = 'user_settings';
 
-export type FrequencyRange = 'selten' | 'mittel' | 'haeufig';
+// Valid frequency classes: '0' (rarest) to '6' (most common)
+export type FrequencyClass = '0' | '1' | '2' | '3' | '4' | '5' | '6';
+
+export const ALL_FREQUENCY_CLASSES: FrequencyClass[] = ['0', '1', '2', '3', '4', '5', '6'];
+
+export const DEFAULT_FREQUENCY_CLASSES: FrequencyClass[] = ['2', '3'];
 
 export interface AppSettings {
   wordCount: number;
@@ -15,7 +20,7 @@ export interface AppSettings {
     mehrwortausdruck: boolean;
     adverb: boolean;
   };
-  frequencyRanges: FrequencyRange[];
+  frequencyClasses: FrequencyClass[];
   notificationsEnabled: boolean;
   notificationTime: string;
 }
@@ -29,10 +34,30 @@ export const DEFAULT_SETTINGS: AppSettings = {
     mehrwortausdruck: true,
     adverb: true,
   },
-  frequencyRanges: ['mittel', 'haeufig'],
+  frequencyClasses: DEFAULT_FREQUENCY_CLASSES,
   notificationsEnabled: false,
   notificationTime: '09:00',
 };
+
+// Migration map for old frequencyRanges to new frequencyClasses
+const LEGACY_FREQUENCY_MAP: Record<string, FrequencyClass[]> = {
+  selten: ['0', '1'],
+  mittel: ['2', '3'],
+  haeufig: ['4', '5', '6'],
+};
+
+function migrateFrequencyRanges(ranges: string[]): FrequencyClass[] {
+  const classes = new Set<FrequencyClass>();
+  for (const range of ranges) {
+    const mapped = LEGACY_FREQUENCY_MAP[range];
+    if (mapped) {
+      for (const cls of mapped) {
+        classes.add(cls);
+      }
+    }
+  }
+  return classes.size > 0 ? Array.from(classes) : DEFAULT_FREQUENCY_CLASSES;
+}
 
 export async function loadSettings(): Promise<AppSettings> {
   try {
@@ -40,17 +65,21 @@ export async function loadSettings(): Promise<AppSettings> {
     if (stored) {
       const parsed = JSON.parse(stored);
 
-      // Migration: alte frequencyRange (Singular) → frequencyRanges (Array)
-      let frequencyRanges = parsed.frequencyRanges;
-      if (!frequencyRanges && parsed.frequencyRange) {
-        frequencyRanges = [parsed.frequencyRange];
+      // Migration: frequencyClasses (new) or frequencyRanges (old) or frequencyRange (oldest)
+      let frequencyClasses = parsed.frequencyClasses;
+      if (!frequencyClasses) {
+        if (parsed.frequencyRanges) {
+          frequencyClasses = migrateFrequencyRanges(parsed.frequencyRanges);
+        } else if (parsed.frequencyRange) {
+          frequencyClasses = migrateFrequencyRanges([parsed.frequencyRange]);
+        }
       }
 
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
         wordTypes: { ...DEFAULT_SETTINGS.wordTypes, ...parsed.wordTypes },
-        frequencyRanges: frequencyRanges ?? DEFAULT_SETTINGS.frequencyRanges,
+        frequencyClasses: frequencyClasses ?? DEFAULT_SETTINGS.frequencyClasses,
       };
     }
     return DEFAULT_SETTINGS;
@@ -71,20 +100,9 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
   }
 }
 
-const FREQUENCY_CLASS_MAP: Record<FrequencyRange, string[]> = {
-  selten: ['0', '1'],
-  mittel: ['2', '3'],
-  haeufig: ['4', '5', '6'],
-};
-
-export function getFrequencyClasses(ranges: FrequencyRange[]): string[] {
-  const classes = new Set<string>();
-  for (const range of ranges) {
-    for (const cls of FREQUENCY_CLASS_MAP[range]) {
-      classes.add(cls);
-    }
-  }
-  return Array.from(classes);
+// Simple passthrough - frequencyClasses are now stored directly
+export function getFrequencyClasses(classes: FrequencyClass[]): string[] {
+  return classes;
 }
 
 export function getSelectedWordTypes(wordTypes: AppSettings['wordTypes']): string[] {

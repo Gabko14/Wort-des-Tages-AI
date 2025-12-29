@@ -48,7 +48,7 @@ const mockSettings: settingsService.AppSettings = {
     mehrwortausdruck: true,
     adverb: true,
   },
-  frequencyRanges: ['mittel'],
+  frequencyClasses: ['2', '3'],
   notificationsEnabled: false,
   notificationTime: '09:00',
 };

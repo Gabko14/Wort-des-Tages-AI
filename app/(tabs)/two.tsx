@@ -9,7 +9,7 @@ import Toast from 'react-native-toast-message';
 
 import { Button } from '@/components/Button';
 import { CollapsibleSection } from '@/components/CollapsibleSection';
-import { FrequencySelector } from '@/components/settings/FrequencySelector';
+import { FrequencyClassSelector } from '@/components/settings/FrequencyClassSelector';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { WordCountSelector } from '@/components/settings/WordCountSelector';
 import { WordTypeToggles } from '@/components/settings/WordTypeToggles';
@@ -24,9 +24,9 @@ import { checkPremiumStatus, getCachedPremiumStatus } from '@/services/premiumSe
 import {
   AppSettings,
   DEFAULT_SETTINGS,
+  FrequencyClass,
   loadSettings,
   saveSettings,
-  FrequencyRange,
 } from '@/services/settingsService';
 import { clearTodaysWords } from '@/services/wordService';
 import { PremiumStatus } from '@/types/premium';
@@ -39,6 +39,8 @@ export default function SettingsScreen() {
     getCachedPremiumStatus()
   );
   const [testingNotification, setTestingNotification] = useState(false);
+  const [wordSettingsChanged, setWordSettingsChanged] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
     // Load premium status
@@ -72,13 +74,13 @@ export default function SettingsScreen() {
       });
   }, []);
 
-  // For word-affecting settings: clear today's words so they regenerate
-  const updateSettings = useCallback(async (newSettings: AppSettings) => {
+  // For word-affecting settings: save but apply tomorrow, show regenerate button
+  const updateWordSettings = useCallback(async (newSettings: AppSettings) => {
     setSettings(newSettings);
     setSaving(true);
     try {
-      await clearTodaysWords();
       await saveSettings(newSettings);
+      setWordSettingsChanged(true);
     } catch (err) {
       if (!__DEV__) {
         Sentry.captureException(err, {
@@ -119,8 +121,35 @@ export default function SettingsScreen() {
     }
   }, []);
 
+  const handleRegenerateWords = async () => {
+    setRegenerating(true);
+    try {
+      await clearTodaysWords();
+      setWordSettingsChanged(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Neue Wörter werden geladen',
+        text2: 'Gehe zurück zur Startseite',
+      });
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, {
+          tags: { feature: 'regenerate_words' },
+          level: 'error',
+        });
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'Fehler',
+        text2: 'Wörter konnten nicht neu geladen werden',
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   const handleWordCountChange = (value: number) => {
-    void updateSettings({ ...settings, wordCount: Math.round(value) });
+    void updateWordSettings({ ...settings, wordCount: Math.round(value) });
   };
 
   const handleWordTypeToggle = (type: keyof AppSettings['wordTypes']) => {
@@ -130,19 +159,19 @@ export default function SettingsScreen() {
     };
     const activeCount = Object.values(newWordTypes).filter(Boolean).length;
     if (activeCount === 0) return;
-    void updateSettings({ ...settings, wordTypes: newWordTypes });
+    void updateWordSettings({ ...settings, wordTypes: newWordTypes });
   };
 
-  const handleFrequencyToggle = (range: FrequencyRange) => {
-    const current = settings.frequencyRanges;
-    const isSelected = current.includes(range);
+  const handleFrequencyClassToggle = (cls: FrequencyClass) => {
+    const current = settings.frequencyClasses;
+    const isSelected = current.includes(cls);
 
     if (isSelected && current.length === 1) {
       return;
     }
 
-    const newRanges = isSelected ? current.filter((r) => r !== range) : [...current, range];
-    void updateSettings({ ...settings, frequencyRanges: newRanges });
+    const newClasses = isSelected ? current.filter((c) => c !== cls) : [...current, cls].sort();
+    void updateWordSettings({ ...settings, frequencyClasses: newClasses as FrequencyClass[] });
   };
 
   const handleNotificationToggle = async (enabled: boolean) => {
@@ -291,23 +320,16 @@ export default function SettingsScreen() {
         {saving && <Text style={styles.savingText}>Speichern...</Text>}
       </View>
 
-      {/* Anzahl der Wörter */}
-      <CollapsibleSection title="Worteinstellungen" defaultExpanded>
+      {/* Wörter pro Tag */}
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>Wörter pro Tag</Text>
         <WordCountSelector value={settings.wordCount} onChange={handleWordCountChange} />
-
-        {/* Wortarten */}
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Wortarten</Text>
-        <WordTypeToggles types={settings.wordTypes} onToggle={handleWordTypeToggle} />
-
-        {/* Frequenzklasse */}
-        <View style={{ marginTop: 24, backgroundColor: 'transparent' }}>
-          <FrequencySelector value={settings.frequencyRanges} onToggle={handleFrequencyToggle} />
-        </View>
-      </CollapsibleSection>
+      </View>
 
       {/* Benachrichtigungen - nur außerhalb von Expo Go anzeigen */}
       {!isExpoGo() && (
-        <CollapsibleSection title="Benachrichtigungen">
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>Benachrichtigungen</Text>
           <NotificationSettings
             enabled={settings.notificationsEnabled}
             time={settings.notificationTime}
@@ -316,10 +338,12 @@ export default function SettingsScreen() {
             onTest={handleTestNotification}
             testingNotification={testingNotification}
           />
-        </CollapsibleSection>
+        </View>
       )}
 
-      <CollapsibleSection title="Premium">
+      {/* Premium */}
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>Premium</Text>
         {premiumStatus?.isPremium ? (
           <>
             <View style={styles.premiumStatus}>
@@ -359,7 +383,35 @@ export default function SettingsScreen() {
             />
           </>
         )}
+      </View>
+
+      {/* Erweiterte Einstellungen */}
+      <CollapsibleSection title="Erweiterte Einstellungen">
+        <Text style={styles.contentLabel}>Wortarten</Text>
+        <WordTypeToggles types={settings.wordTypes} onToggle={handleWordTypeToggle} />
+
+        <View style={{ marginTop: 24, backgroundColor: 'transparent' }}>
+          <FrequencyClassSelector
+            value={settings.frequencyClasses}
+            onToggle={handleFrequencyClassToggle}
+          />
+        </View>
       </CollapsibleSection>
+
+      {/* Neue Wörter generieren - nur anzeigen wenn Einstellungen geändert */}
+      {wordSettingsChanged && (
+        <View style={styles.regenerateSection}>
+          <Text style={styles.regenerateHint}>Einstellungen werden ab morgen angewendet.</Text>
+          <Button
+            variant="secondary"
+            onPress={handleRegenerateWords}
+            title="Jetzt neue Wörter laden"
+            icon="refresh-outline"
+            loading={regenerating}
+            accessibilityLabel="Neue Wörter mit aktuellen Einstellungen generieren"
+          />
+        </View>
+      )}
 
       <View style={styles.versionFooter}>
         <Text style={styles.versionText}>Version {Constants.expoConfig?.version ?? '?'}</Text>
@@ -406,15 +458,30 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     backgroundColor: 'transparent',
   },
-  sectionTitle: {
-    fontSize: 18,
+  sectionHeader: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  contentLabel: {
+    fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
+    opacity: 0.8,
   },
-  sectionHint: {
+  regenerateSection: {
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(128, 128, 128, 0.3)',
+    backgroundColor: 'transparent',
+  },
+  regenerateHint: {
     fontSize: 14,
-    opacity: 0.6,
+    opacity: 0.7,
     marginBottom: 12,
+    textAlign: 'center',
   },
   premiumStatus: {
     marginBottom: 16,

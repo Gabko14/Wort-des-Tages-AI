@@ -32,7 +32,7 @@ describe('settingsService', () => {
       expect(settings.wordCount).toBe(5);
       expect(settings.wordTypes.substantiv).toBe(true);
       expect(settings.wordTypes.verb).toBe(false);
-      expect(settings.frequencyRanges).toEqual(DEFAULT_SETTINGS.frequencyRanges);
+      expect(settings.frequencyClasses).toEqual(DEFAULT_SETTINGS.frequencyClasses);
     });
 
     it('should fall back to defaults when parsing fails', async () => {
@@ -43,14 +43,34 @@ describe('settingsService', () => {
       expect(settings).toEqual(DEFAULT_SETTINGS);
     });
 
-    it('should migrate old frequencyRange (singular) to frequencyRanges (array)', async () => {
+    it('should migrate old frequencyRange (singular) to frequencyClasses', async () => {
       (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
         JSON.stringify({ frequencyRange: 'selten' })
       );
 
       const settings = await loadSettings();
 
-      expect(settings.frequencyRanges).toEqual(['selten']);
+      expect(settings.frequencyClasses).toEqual(['0', '1']);
+    });
+
+    it('should migrate old frequencyRanges (array) to frequencyClasses', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ frequencyRanges: ['mittel', 'haeufig'] })
+      );
+
+      const settings = await loadSettings();
+
+      expect(settings.frequencyClasses).toEqual(['2', '3', '4', '5', '6']);
+    });
+
+    it('should preserve new frequencyClasses format', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+        JSON.stringify({ frequencyClasses: ['2', '4'] })
+      );
+
+      const settings = await loadSettings();
+
+      expect(settings.frequencyClasses).toEqual(['2', '4']);
     });
   });
 
@@ -74,24 +94,10 @@ describe('settingsService', () => {
   });
 
   describe('getFrequencyClasses', () => {
-    it('should map single range to class list', () => {
-      expect(getFrequencyClasses(['selten'])).toEqual(['0', '1']);
-      expect(getFrequencyClasses(['mittel'])).toEqual(['2', '3']);
-      expect(getFrequencyClasses(['haeufig'])).toEqual(['4', '5', '6']);
-    });
-
-    it('should combine multiple ranges into unified class list', () => {
-      const result = getFrequencyClasses(['selten', 'mittel']);
-      expect(result).toContain('0');
-      expect(result).toContain('1');
-      expect(result).toContain('2');
-      expect(result).toContain('3');
-      expect(result).toHaveLength(4);
-    });
-
-    it('should handle all ranges selected', () => {
-      const result = getFrequencyClasses(['selten', 'mittel', 'haeufig']);
-      expect(result).toHaveLength(7);
+    it('should pass through frequency classes directly', () => {
+      expect(getFrequencyClasses(['2', '3', '4'])).toEqual(['2', '3', '4']);
+      expect(getFrequencyClasses(['0', '1'])).toEqual(['0', '1']);
+      expect(getFrequencyClasses(['5', '6'])).toEqual(['5', '6']);
     });
 
     it('should return empty array for empty input', () => {
