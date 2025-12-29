@@ -87,7 +87,6 @@ export function WordCard({
   const cardBackground = useThemeColor({ light: '#f8f9fa', dark: '#1a1a1a' }, 'background');
   const borderColor = useThemeColor({ light: '#e9ecef', dark: '#333' }, 'background');
   const accentColor = useThemeColor({ light: '#2f95dc', dark: '#4da6ff' }, 'tint');
-  const mutedColor = useThemeColor({ light: '#6c757d', dark: '#adb5bd' }, 'text');
   const iconColor = useThemeColor({ light: '#6c757d', dark: '#adb5bd' }, 'text');
 
   const handleToggleExpand = () => {
@@ -128,11 +127,6 @@ export function WordCard({
         <View style={[styles.tag, { backgroundColor: accentColor }]}>
           <Text style={styles.tagText}>{word.wortklasse}</Text>
         </View>
-        {word.frequenzklasse && word.frequenzklasse !== 'n/a' && (
-          <View style={[styles.tag, styles.frequencyTag, { backgroundColor: mutedColor }]}>
-            <Text style={styles.tagText}>Frequenz: {word.frequenzklasse}</Text>
-          </View>
-        )}
       </View>
       {isExpanded && (
         <>
@@ -225,9 +219,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-  },
-  frequencyTag: {
-    opacity: 0.8,
   },
   tagText: {
     color: '#fff',

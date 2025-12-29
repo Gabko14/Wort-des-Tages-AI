@@ -96,7 +96,7 @@ function buildSelectionOptions(settings: AppSettings): WordSelectionOptions {
   return {
     count: settings.wordCount,
     wordTypes: getSelectedWordTypes(settings.wordTypes),
-    frequencyClasses: getFrequencyClasses(settings.frequencyRanges),
+    frequencyClasses: getFrequencyClasses(settings.frequencyClasses),
   };
 }
 
