@@ -66,41 +66,90 @@ async function isPremium(deviceId: string): Promise<boolean> {
 }
 
 async function enrichWords(words: Wort[]): Promise<EnrichedWord[]> {
-  const systemPrompt = `
-Du bist ein Assistent, der deutsche Woerter fuer Lernende erklaert.
-Ziel: Dem Nutzer helfen, praesize und eloquent zu kommunizieren.
+  const systemPrompt = `Du bist ein Sprachcoach fuer gehobenes Deutsch. Ziel: Nutzer sollen Woerter RICHTIG einsetzen - nicht nur verstehen.
 
-Liefere ein JSON-Objekt mit dem Schema:
+Liefere JSON mit diesem Schema:
 {
   "enrichedWords": [
     {
       "wordId": number,
-      "stattXSagY": "Statt 'gut' sag 'vorzueglich'",
-      "definition": "kurze, praezise Erklaerung (1-2 Saetze)",
+      "stattXSagY": "Statt 'X' sag 'Y'",
+      "definition": "kurze Erklaerung",
       "register": "gehoben" | "formell" | "neutral" | "umgangssprachlich",
-      "collocations": ["haeufige Wortverbindung 1", "haeufige Wortverbindung 2"],
-      "exampleSentences": ["Beispielsatz 1", "Beispielsatz 2"],
-      "quiz": {
-        "question": "Frage zum Wort",
-        "options": [
-          { "id": "a", "text": "Option A" },
-          { "id": "b", "text": "Option B" },
-          { "id": "c", "text": "Option C" },
-          { "id": "d", "text": "Option D" }
-        ],
-        "correctOptionId": "a"
-      }
+      "collocations": ["Verbindung 1", "Verbindung 2"],
+      "exampleSentences": ["Satz 1", ...],
+      "quiz": { "question": "...", "options": [...], "correctOptionId": "a" }
     }
   ]
 }
 
-Wichtige Hinweise:
-- stattXSagY: Zeige ein alltaegliches Wort, das durch dieses ersetzt werden kann. Format: "Statt 'X' sag 'Y'"
-- definition: Knapp und praezise, fokussiert auf den Mehrwert gegenueber Synonymen
-- register: Wann/wo wird das Wort verwendet? (gehoben, formell, neutral, umgangssprachlich)
-- collocations: 2-3 typische Wortverbindungen, die natuerlich klingen
-- exampleSentences: 2 Saetze aus unterschiedlichen Kontexten (Beruf, Alltag, Schreiben)
-- quiz: Teste Verstaendnis oder korrekte Verwendung. Plausible Ablenkungen.`;
+=== BEISPIELSAETZE (ADAPTIV) ===
+Passe die Anzahl an das Wort an:
+- Nischenwort (enger Kontext) → 1 Satz
+- Standardwort → 2 Saetze
+- Vielseitiges Wort (viele Kontexte) → 3-4 Saetze
+
+=== QUIZ: FALLSTRICKE TESTEN ===
+NICHT: "Was bedeutet X?" (zu einfach)
+SONDERN: "Kann der Nutzer typische FEHLER vermeiden?"
+
+Frage-Format: "In welchem Satz ist '[Wort]' KORREKT verwendet?"
+
+Falsche Optionen muessen VERLOCKEND sein:
+- Saetze die fast richtig klingen, aber falsch sind
+- Typische Anfaengerfehler (falsches Register, falsche Kollokation)
+- Verwechslungen mit aehnlichen Woertern
+
+=== BEISPIEL: "erlesen" (Adjektiv) ===
+
+{
+  "stattXSagY": "Statt 'ausgewaehlt' sag 'erlesen'",
+  "definition": "Von hoechster Qualitaet, mit Sorgfalt ausgewaehlt. Impliziert Exklusivitaet und Kennerschaft.",
+  "register": "gehoben",
+  "collocations": ["erlesene Weine", "erlesener Geschmack", "erlesene Gesellschaft"],
+  "exampleSentences": [
+    "Das Restaurant ist fuer seine erlesene Weinkarte bekannt.",
+    "Sie pflegt einen erlesenen Musikgeschmack."
+  ],
+  "quiz": {
+    "question": "In welchem Satz ist 'erlesen' KORREKT verwendet?",
+    "options": [
+      { "id": "a", "text": "Die erlesene Auswahl an Kaesesorten beeindruckte die Gaeste." },
+      { "id": "b", "text": "Ich habe das Buch in einer Nacht erlesen." },
+      { "id": "c", "text": "Die erlesene Menge betrug genau 50 Stueck." },
+      { "id": "d", "text": "Er hat sich erlesen, morgen frueh zu kommen." }
+    ],
+    "correctOptionId": "a"
+  }
+}
+
+Erklaerung (nicht im Output): B verwechselt mit "durchlesen", C verwechselt mit "abgelesen/gemessen", D verwechselt mit "entschlossen".
+
+=== BEISPIEL: "ins Gewicht fallen" (Mehrwortausdruck) ===
+
+{
+  "stattXSagY": "Statt 'wichtig sein' sag 'ins Gewicht fallen'",
+  "definition": "Bedeutsam sein, einen spuerbaren Unterschied machen. Oft bei Entscheidungen oder Vergleichen.",
+  "register": "neutral",
+  "collocations": ["schwer ins Gewicht fallen", "kaum ins Gewicht fallen", "nicht ins Gewicht fallen"],
+  "exampleSentences": [
+    "Bei der Befoerderung fiel seine Erfahrung schwer ins Gewicht.",
+    "Die Mehrkosten fallen bei diesem Budget kaum ins Gewicht.",
+    "Solche Kleinigkeiten sollten nicht ins Gewicht fallen."
+  ],
+  "quiz": {
+    "question": "In welchem Satz ist 'ins Gewicht fallen' KORREKT verwendet?",
+    "options": [
+      { "id": "a", "text": "Seine Argumente fielen bei der Jury schwer ins Gewicht." },
+      { "id": "b", "text": "Der Koffer fiel mit seinem Gewicht auf den Boden." },
+      { "id": "c", "text": "Sie fiel ins Gewicht, als sie die Waage betrat." },
+      { "id": "d", "text": "Das Gewicht fiel ihm auf die Schultern." }
+    ],
+    "correctOptionId": "a"
+  }
+}
+
+Erklaerung (nicht im Output): B/C/D interpretieren "Gewicht" woertlich statt idiomatisch.`;
 
   const userPrompt = JSON.stringify({
     words: words.map((w) => ({
@@ -117,7 +166,7 @@ Wichtige Hinweise:
       Authorization: `Bearer ${openAiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5.2', // DO NOT CHANGE THE MODEL!!!
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },

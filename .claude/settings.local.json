@@ -4,7 +4,8 @@
       "Bash(ls:*)",
       "Bash(npm run lint)",
       "Bash(npm run type-check:*)",
-      "Bash(npm run lint:fix:*)"
+      "Bash(npm run lint:fix:*)",
+      "Bash(npm test)"
     ]
   }
 }
