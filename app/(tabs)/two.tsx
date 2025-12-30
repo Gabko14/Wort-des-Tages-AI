@@ -5,6 +5,7 @@ import { ActivityIndicator, Linking, ScrollView, StyleSheet } from 'react-native
 import * as Sentry from '@sentry/react-native';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
 import { Button } from '@/components/Button';
@@ -32,6 +33,7 @@ import { clearTodaysWords } from '@/services/wordService';
 import { PremiumStatus } from '@/types/premium';
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -314,125 +316,151 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Einstellungen</Text>
-        {saving && <Text style={styles.savingText}>Speichern...</Text>}
-      </View>
+    <View style={styles.screenContainer}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.container,
+          { paddingTop: insets.top + 20 },
+          wordSettingsChanged && styles.containerWithFloatingButton,
+        ]}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Einstellungen</Text>
+          {saving && <Text style={styles.savingText}>Speichern...</Text>}
+        </View>
 
-      {/* Wörter pro Tag */}
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>Wörter pro Tag</Text>
-        <WordCountSelector value={settings.wordCount} onChange={handleWordCountChange} />
-      </View>
-
-      {/* Benachrichtigungen - nur außerhalb von Expo Go anzeigen */}
-      {!isExpoGo() && (
+        {/* Wörter pro Tag */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Benachrichtigungen</Text>
-          <NotificationSettings
-            enabled={settings.notificationsEnabled}
-            time={settings.notificationTime}
-            onToggle={handleNotificationToggle}
-            onTimeChange={handleTimeChange}
-            onTest={handleTestNotification}
-            testingNotification={testingNotification}
-          />
+          <Text style={styles.sectionHeader}>Wörter pro Tag</Text>
+          <WordCountSelector value={settings.wordCount} onChange={handleWordCountChange} />
         </View>
-      )}
 
-      {/* Premium */}
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>Premium</Text>
-        {premiumStatus?.isPremium ? (
-          <>
-            <View style={styles.premiumStatus}>
-              <Text style={styles.premiumStatusText}>Premium aktiv</Text>
-              {premiumStatus.source === 'google_play' && premiumStatus.expiresAt && (
-                <Text style={styles.premiumExpiryText}>
-                  {premiumStatus.autoRenewing
-                    ? `Verlängert sich am ${new Date(premiumStatus.expiresAt).toLocaleDateString('de-DE')}`
-                    : `Läuft ab am ${new Date(premiumStatus.expiresAt).toLocaleDateString('de-DE')}`}
-                </Text>
-              )}
-              {premiumStatus.source === 'dev' && (
-                <Text style={styles.premiumExpiryText}>Entwickler-Modus</Text>
-              )}
-            </View>
-            {premiumStatus.source === 'google_play' && (
-              <Button
-                variant="secondary"
-                onPress={handleManageSubscription}
-                title="Abonnement verwalten"
-                icon="open-outline"
-                accessibilityLabel="Abonnement im Play Store verwalten"
-              />
-            )}
-          </>
-        ) : (
-          <>
-            <Text style={styles.premiumPromoText}>
-              Schalte KI-Definitionen, Beispielsätze und Quizfragen frei.
-            </Text>
-            <Button
-              variant="primary"
-              onPress={handleUpgradePremium}
-              title="Premium freischalten"
-              icon="star-outline"
-              accessibilityLabel="Premium-Abonnement abschließen"
+        {/* Benachrichtigungen - nur außerhalb von Expo Go anzeigen */}
+        {!isExpoGo() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Benachrichtigungen</Text>
+            <NotificationSettings
+              enabled={settings.notificationsEnabled}
+              time={settings.notificationTime}
+              onToggle={handleNotificationToggle}
+              onTimeChange={handleTimeChange}
+              onTest={handleTestNotification}
+              testingNotification={testingNotification}
             />
-          </>
+          </View>
         )}
-      </View>
 
-      {/* Erweiterte Einstellungen */}
-      <CollapsibleSection title="Erweiterte Einstellungen">
-        <Text style={styles.contentLabel}>Wortarten</Text>
-        <WordTypeToggles types={settings.wordTypes} onToggle={handleWordTypeToggle} />
-
-        <View style={{ marginTop: 24, backgroundColor: 'transparent' }}>
-          <FrequencyClassSelector
-            value={settings.frequencyClasses}
-            onToggle={handleFrequencyClassToggle}
-          />
+        {/* Premium */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>Premium</Text>
+          {premiumStatus?.isPremium ? (
+            <>
+              <View style={styles.premiumStatus}>
+                <Text style={styles.premiumStatusText}>Premium aktiv</Text>
+                {premiumStatus.source === 'google_play' && premiumStatus.expiresAt && (
+                  <Text style={styles.premiumExpiryText}>
+                    {premiumStatus.autoRenewing
+                      ? `Verlängert sich am ${new Date(premiumStatus.expiresAt).toLocaleDateString('de-DE')}`
+                      : `Läuft ab am ${new Date(premiumStatus.expiresAt).toLocaleDateString('de-DE')}`}
+                  </Text>
+                )}
+                {premiumStatus.source === 'dev' && (
+                  <Text style={styles.premiumExpiryText}>Entwickler-Modus</Text>
+                )}
+              </View>
+              {premiumStatus.source === 'google_play' && (
+                <Button
+                  variant="secondary"
+                  onPress={handleManageSubscription}
+                  title="Abonnement verwalten"
+                  icon="open-outline"
+                  accessibilityLabel="Abonnement im Play Store verwalten"
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <Text style={styles.premiumPromoText}>
+                Schalte KI-Definitionen, Beispielsätze und Quizfragen frei.
+              </Text>
+              <Button
+                variant="primary"
+                onPress={handleUpgradePremium}
+                title="Premium freischalten"
+                icon="star-outline"
+                accessibilityLabel="Premium-Abonnement abschließen"
+              />
+            </>
+          )}
         </View>
-      </CollapsibleSection>
 
-      {/* Neue Wörter generieren - nur anzeigen wenn Einstellungen geändert */}
+        {/* Erweiterte Einstellungen */}
+        <CollapsibleSection title="Erweiterte Einstellungen">
+          <Text style={styles.contentLabel}>Wortarten</Text>
+          <WordTypeToggles types={settings.wordTypes} onToggle={handleWordTypeToggle} />
+
+          <View style={{ marginTop: 24, backgroundColor: 'transparent' }}>
+            <FrequencyClassSelector
+              value={settings.frequencyClasses}
+              onToggle={handleFrequencyClassToggle}
+            />
+          </View>
+        </CollapsibleSection>
+
+        <View style={styles.versionFooter}>
+          <Text style={styles.versionText}>Version {Constants.expoConfig?.version ?? '?'}</Text>
+          <Text style={styles.attributionText}>
+            Wortdaten: DWDS – Digitales Wörterbuch der deutschen Sprache
+          </Text>
+          <Text
+            style={styles.attributionLink}
+            onPress={() => Linking.openURL('https://www.dwds.de')}
+          >
+            www.dwds.de
+          </Text>
+          <Text style={styles.licenseText}>Lizenziert unter CC BY-SA 4.0</Text>
+        </View>
+      </ScrollView>
+
+      {/* Floating button - nur anzeigen wenn Einstellungen geändert */}
       {wordSettingsChanged && (
-        <View style={styles.regenerateSection}>
-          <Text style={styles.regenerateHint}>Einstellungen werden ab morgen angewendet.</Text>
+        <View style={styles.floatingButtonContainer}>
           <Button
-            variant="secondary"
+            variant="primary"
             onPress={handleRegenerateWords}
-            title="Jetzt neue Wörter laden"
+            title="Jetzt anwenden"
             icon="refresh-outline"
             loading={regenerating}
             accessibilityLabel="Neue Wörter mit aktuellen Einstellungen generieren"
           />
         </View>
       )}
-
-      <View style={styles.versionFooter}>
-        <Text style={styles.versionText}>Version {Constants.expoConfig?.version ?? '?'}</Text>
-        <Text style={styles.attributionText}>
-          Wortdaten: DWDS – Digitales Wörterbuch der deutschen Sprache
-        </Text>
-        <Text style={styles.attributionLink} onPress={() => Linking.openURL('https://www.dwds.de')}>
-          www.dwds.de
-        </Text>
-        <Text style={styles.licenseText}>Lizenziert unter CC BY-SA 4.0</Text>
-      </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
   container: {
     padding: 20,
+  },
+  containerWithFloatingButton: {
+    paddingBottom: 100,
+  },
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    paddingBottom: 24,
+    backgroundColor: 'transparent',
   },
   centered: {
     flex: 1,
@@ -468,20 +496,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     opacity: 0.8,
-  },
-  regenerateSection: {
-    marginBottom: 24,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(128, 128, 128, 0.3)',
-    backgroundColor: 'transparent',
-  },
-  regenerateHint: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 12,
-    textAlign: 'center',
   },
   premiumStatus: {
     marginBottom: 16,

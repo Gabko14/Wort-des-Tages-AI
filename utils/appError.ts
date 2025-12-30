@@ -4,6 +4,7 @@ export type AppErrorCode =
   | 'supabase_not_configured'
   | 'supabase_invoke_failed'
   | 'ai_enrich_failed'
+  | 'ai_enrich_empty'
   | 'premium_check_failed'
   | 'premium_grant_failed'
   | 'notifications_unavailable'

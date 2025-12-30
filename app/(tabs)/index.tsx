@@ -1,37 +1,66 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import { useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
+import { CompactStreakBadge } from '@/components/CompactStreakBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
+import { StatsModal } from '@/components/StatsModal';
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
-import { enrichWords } from '@/services/aiService';
+import { enrichWord } from '@/services/aiService';
 import { initDatabase, Wort } from '@/services/database';
-import { QuizCompletionResult } from '@/services/gamificationService';
+import {
+  getCurrentStreak,
+  hasCompletedToday,
+  QuizCompletionResult,
+} from '@/services/gamificationService';
 import { refreshNotificationContent } from '@/services/notificationService';
 import { checkPremiumStatus } from '@/services/premiumService';
 import { loadSettings } from '@/services/settingsService';
 import { clearTodaysWords, getOrGenerateTodaysWords } from '@/services/wordService';
 import { EnrichedWord } from '@/types/ai';
+import type { StreakData } from '@/types/gamification';
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const [words, setWords] = useState<Wort[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState(false);
+  const [aiLoadingIds, setAiLoadingIds] = useState<Set<number>>(new Set());
+  const [aiErrorIds, setAiErrorIds] = useState<Set<number>>(new Set());
   const [isPremium, setIsPremium] = useState(false);
   const [enrichedMap, setEnrichedMap] = useState<Record<number, EnrichedWord>>({});
   const [loadingMessage, setLoadingMessage] = useState('Lade Wörter des Tages...');
   const [loadingSeconds, setLoadingSeconds] = useState(0);
   const [regenerating, setRegenerating] = useState(false);
+
+  // Streak state
+  const [streak, setStreak] = useState<StreakData | null>(null);
+  const [completedToday, setCompletedToday] = useState(false);
+  const [statsModalVisible, setStatsModalVisible] = useState(false);
+
+  // Track which words have started enrichment (prevents duplicates across re-renders)
+  const enrichmentStartedRef = useRef<Set<number>>(new Set());
+
+  const loadStreak = useCallback(async () => {
+    try {
+      const [streakData, completed] = await Promise.all([getCurrentStreak(), hasCompletedToday()]);
+      setStreak(streakData);
+      setCompletedToday(completed);
+    } catch (err) {
+      if (!__DEV__) {
+        Sentry.captureException(err, { tags: { feature: 'streak_loading' }, level: 'info' });
+      }
+    }
+  }, []);
 
   const loadWords = useCallback(async () => {
     try {
@@ -81,33 +110,46 @@ export default function HomeScreen() {
       setIsPremium(premiumEnabled);
 
       if (premiumEnabled) {
-        setAiLoading(true);
-        setAiError(false);
-        void enrichWords(todaysWords)
-          .then((result) => {
-            const next: Record<number, EnrichedWord> = {};
-            result.forEach((item) => {
-              next[item.wordId] = item;
-            });
-            setEnrichedMap(next);
-          })
-          .catch((err) => {
-            if (!__DEV__) {
-              Sentry.captureException(err, {
-                tags: { feature: 'ai_enrichment' },
-                level: 'error',
+        // Filter to words not yet started (ref persists across re-renders)
+        const wordsToEnrich = todaysWords.filter(
+          (word) => !enrichmentStartedRef.current.has(word.id)
+        );
+
+        if (wordsToEnrich.length > 0) {
+          // Mark as started before async work (prevents race conditions)
+          wordsToEnrich.forEach((w) => enrichmentStartedRef.current.add(w.id));
+
+          // Set loading state for new words only
+          setAiLoadingIds((prev) => {
+            const next = new Set(prev);
+            wordsToEnrich.forEach((w) => next.add(w.id));
+            return next;
+          });
+
+          // Enrich each word individually for faster perceived loading
+          wordsToEnrich.forEach((word) => {
+            enrichWord(word)
+              .then((enriched) => {
+                setEnrichedMap((prev) => ({ ...prev, [word.id]: enriched }));
+              })
+              .catch((err) => {
+                if (!__DEV__) {
+                  Sentry.captureException(err, {
+                    tags: { feature: 'ai_enrichment', wordId: word.id },
+                    level: 'error',
+                  });
+                }
+                setAiErrorIds((prev) => new Set(prev).add(word.id));
+              })
+              .finally(() => {
+                setAiLoadingIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(word.id);
+                  return next;
+                });
               });
-            }
-            setAiError(true);
-            setEnrichedMap({});
-            Toast.show({
-              type: 'error',
-              text1: 'AI-Anreicherung fehlgeschlagen',
-              text2: 'Basisinformationen werden weiterhin angezeigt',
-              visibilityTime: 4000,
-            });
-          })
-          .finally(() => setAiLoading(false));
+          });
+        }
       }
     } catch (err) {
       if (!__DEV__) {
@@ -123,11 +165,12 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // Reload words when screen gains focus (handles settings/premium changes)
+  // Reload words and streak when screen gains focus
   useFocusEffect(
     useCallback(() => {
       loadWords();
-    }, [loadWords])
+      loadStreak();
+    }, [loadWords, loadStreak])
   );
 
   // Timer for loading seconds
@@ -147,30 +190,40 @@ export default function HomeScreen() {
     loadWords();
   };
 
-  const handleQuizComplete = useCallback((result: QuizCompletionResult) => {
-    // Show milestone celebration
-    if (result.milestoneReached) {
-      Toast.show({
-        type: 'success',
-        text1: `${result.milestoneReached} Tage!`,
-        text2: 'Meilenstein erreicht - weiter so!',
-        visibilityTime: 4000,
-      });
-    } else if (result.isFirstCompletionToday && result.streak.currentStreak > 1) {
-      // Show streak continuation message
-      Toast.show({
-        type: 'success',
-        text1: `${result.streak.currentStreak} Tage in Folge!`,
-        text2: 'Deine Serie geht weiter',
-        visibilityTime: 3000,
-      });
-    }
-  }, []);
+  const handleQuizComplete = useCallback(
+    (result: QuizCompletionResult) => {
+      // Reload streak to update badge
+      loadStreak();
+
+      // Show milestone celebration
+      if (result.milestoneReached) {
+        Toast.show({
+          type: 'success',
+          text1: `${result.milestoneReached} Tage!`,
+          text2: 'Meilenstein erreicht - weiter so!',
+          visibilityTime: 4000,
+        });
+      } else if (result.isFirstCompletionToday && result.streak.currentStreak > 1) {
+        // Show streak continuation message
+        Toast.show({
+          type: 'success',
+          text1: `${result.streak.currentStreak} Tage in Folge!`,
+          text2: 'Deine Serie geht weiter',
+          visibilityTime: 3000,
+        });
+      }
+    },
+    [loadStreak]
+  );
 
   const handleRegenerateWords = useCallback(async () => {
     setRegenerating(true);
     try {
       await clearTodaysWords();
+      // Reset enrichment tracking for new words
+      enrichmentStartedRef.current.clear();
+      setEnrichedMap({});
+      setAiErrorIds(new Set());
       await loadWords(); // Immediately reload
       Toast.show({
         type: 'success',
@@ -199,13 +252,13 @@ export default function HomeScreen() {
       <WordCard
         word={item}
         enriched={enrichedMap[item.id]}
-        aiLoading={isPremium && aiLoading}
-        aiError={isPremium && aiError}
+        aiLoading={isPremium && aiLoadingIds.has(item.id)}
+        aiError={isPremium && aiErrorIds.has(item.id)}
         index={index}
         onQuizComplete={handleQuizComplete}
       />
     ),
-    [enrichedMap, isPremium, aiLoading, aiError, handleQuizComplete]
+    [enrichedMap, isPremium, aiLoadingIds, aiErrorIds, handleQuizComplete]
   );
 
   const keyExtractor = useCallback((item: Wort) => item.id.toString(), []);
@@ -214,17 +267,16 @@ export default function HomeScreen() {
     () => (
       <View style={styles.header}>
         <Text style={styles.title}>Wörter des Tages</Text>
-        <Text style={styles.subtitle}>
-          {new Date().toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Text>
+        {streak && (
+          <CompactStreakBadge
+            streak={streak}
+            completedToday={completedToday}
+            onPress={() => setStatsModalVisible(true)}
+          />
+        )}
       </View>
     ),
-    []
+    [streak, completedToday]
   );
 
   const ListEmpty = useMemo(() => <EmptyState />, []);
@@ -278,17 +330,27 @@ export default function HomeScreen() {
   }
 
   return (
-    <FlatList
-      data={words}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      ListHeaderComponent={ListHeader}
-      ListFooterComponent={ListFooter}
-      ListEmptyComponent={ListEmpty}
-      style={styles.scrollView}
-      contentContainerStyle={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    />
+    <>
+      <FlatList
+        data={words}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={ListHeader}
+        ListFooterComponent={ListFooter}
+        ListEmptyComponent={ListEmpty}
+        style={styles.scrollView}
+        contentContainerStyle={[styles.container, { paddingTop: insets.top + 20 }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      />
+      {streak && (
+        <StatsModal
+          visible={statsModalVisible}
+          onClose={() => setStatsModalVisible(false)}
+          streak={streak}
+          completedToday={completedToday}
+        />
+      )}
+    </>
   );
 }
 
@@ -306,17 +368,15 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 24,
     backgroundColor: 'transparent',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    opacity: 0.7,
   },
   loadingText: {
     marginTop: 12,
