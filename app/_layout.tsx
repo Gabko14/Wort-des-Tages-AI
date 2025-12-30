@@ -92,9 +92,17 @@ export default Sentry.wrap(function RootLayout() {
     ...FontAwesome.font,
   });
   const [dbReady, setDbReady] = useState(false);
+  const [dbError, setDbError] = useState<Error | null>(null);
 
+  // Throw font loading errors synchronously during render for ErrorBoundary
   if (error) {
     throw error;
+  }
+
+  // Throw database init errors synchronously during render for ErrorBoundary
+  // (async errors in promise .catch() handlers won't be caught by ErrorBoundary)
+  if (dbError) {
+    throw dbError;
   }
 
   useEffect(() => {
@@ -110,13 +118,21 @@ export default Sentry.wrap(function RootLayout() {
         if (!__DEV__) {
           Sentry.captureException(err, { tags: { feature: 'database_init' }, level: 'error' });
         }
-        throw err;
+        // Store error in state to throw during render (ErrorBoundary can only catch sync render errors)
+        setDbError(err instanceof Error ? err : new Error(String(err)));
       });
   }, []);
 
   useEffect(() => {
     if (__DEV__) {
-      getDeviceId().then((id) => console.log('Device ID:', id));
+      void getDeviceId()
+        .then((id) => {
+          // eslint-disable-next-line no-console
+          console.log('Device ID:', id);
+        })
+        .catch(() => {
+          // Device ID is for debugging only, ignore errors
+        });
     }
   }, []);
 
