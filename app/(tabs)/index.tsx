@@ -117,11 +117,16 @@ export default function HomeScreen() {
           // Mark as started before async work (prevents race conditions)
           wordsToEnrich.forEach((w) => enrichmentStartedRef.current.add(w.id));
 
-          // Set loading state for new words only
+          // Set loading state for new words only and clear any previous errors
           setAiLoadingIds((prev) => {
             const next = new Set(prev);
             wordsToEnrich.forEach((w) => next.add(w.id));
             return next;
+          });
+          setAiErrorIds((prev) => {
+            const wordIds = new Set(wordsToEnrich.map((w) => w.id));
+            const next = new Set([...prev].filter((id) => !wordIds.has(id)));
+            return next.size === prev.size ? prev : next;
           });
 
           // Enrich each word individually for faster perceived loading
@@ -137,6 +142,8 @@ export default function HomeScreen() {
                     level: 'error',
                   });
                 }
+                // Remove from started ref to allow retry on next refresh
+                enrichmentStartedRef.current.delete(word.id);
                 setAiErrorIds((prev) => new Set(prev).add(word.id));
               })
               .finally(() => {
