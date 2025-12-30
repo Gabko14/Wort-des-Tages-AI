@@ -18,9 +18,9 @@ import Animated, {
 import { Button } from '@/components/Button';
 import { QuizCard } from '@/components/QuizCard';
 import { Text, View, useThemeColor } from '@/components/Themed';
-import { Wort } from '@/services/database';
 import type { QuizCompletionResult } from '@/services/gamificationService';
 import { EnrichedWord } from '@/types/ai';
+import { Wort } from '@/types/word';
 
 interface WordCardProps {
   word: Wort;

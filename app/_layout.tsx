@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -14,6 +14,7 @@ import Toast from 'react-native-toast-message';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { createToastConfig } from '@/config/toastConfig';
+import { initDatabase } from '@/services/database';
 import { getDeviceId } from '@/services/deviceService';
 
 Sentry.init({
@@ -90,6 +91,7 @@ export default Sentry.wrap(function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
+  const [dbReady, setDbReady] = useState(false);
 
   if (error) {
     throw error;
@@ -102,12 +104,23 @@ export default Sentry.wrap(function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
+    initDatabase()
+      .then(() => setDbReady(true))
+      .catch((err) => {
+        if (!__DEV__) {
+          Sentry.captureException(err, { tags: { feature: 'database_init' }, level: 'error' });
+        }
+        throw err;
+      });
+  }, []);
+
+  useEffect(() => {
     if (__DEV__) {
       getDeviceId().then((id) => console.log('Device ID:', id));
     }
   }, []);
 
-  if (!loaded) {
+  if (!loaded || !dbReady) {
     return null;
   }
 

@@ -15,7 +15,6 @@ import { StatsModal } from '@/components/StatsModal';
 import { Text, View } from '@/components/Themed';
 import { WordCard } from '@/components/WordCard';
 import { enrichWord } from '@/services/aiService';
-import { initDatabase, Wort } from '@/services/database';
 import {
   getCurrentStreak,
   hasCompletedToday,
@@ -27,6 +26,7 @@ import { loadSettings } from '@/services/settingsService';
 import { clearTodaysWords, getOrGenerateTodaysWords } from '@/services/wordService';
 import { EnrichedWord } from '@/types/ai';
 import type { StreakData } from '@/types/gamification';
+import { Wort } from '@/types/word';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -65,8 +65,6 @@ export default function HomeScreen() {
   const loadWords = useCallback(async () => {
     try {
       setError(null);
-      setLoadingMessage('Datenbank wird eingerichtet...');
-      await initDatabase();
       setLoadingMessage('Lade Wörter des Tages...');
       const todaysWords = await getOrGenerateTodaysWords();
       setWords(todaysWords);

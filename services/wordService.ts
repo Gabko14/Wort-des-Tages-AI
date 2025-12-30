@@ -1,12 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { getDatabase, Wort } from '@/services/database';
+import { getDatabase } from '@/services/database';
 import {
   AppSettings,
   getFrequencyClasses,
   getSelectedWordTypes,
   loadSettings,
 } from '@/services/settingsService';
+import { Wort } from '@/types/word';
 import { AppError } from '@/utils/appError';
 
 const DAILY_WORDS_KEY = 'daily_words';
