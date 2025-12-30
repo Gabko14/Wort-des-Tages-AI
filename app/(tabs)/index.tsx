@@ -50,6 +50,17 @@ export default function HomeScreen() {
   // Track which words have started enrichment (prevents duplicates across re-renders)
   const enrichmentStartedRef = useRef<Set<number>>(new Set());
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+
+  // Cleanup: mark as unmounted when component unmounts
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const loadStreak = useCallback(async () => {
     try {
       const [streakData, completed] = await Promise.all([getCurrentStreak(), hasCompletedToday()]);
@@ -133,7 +144,10 @@ export default function HomeScreen() {
           wordsToEnrich.forEach((word) => {
             enrichWord(word)
               .then((enriched) => {
-                setEnrichedMap((prev) => ({ ...prev, [word.id]: enriched }));
+                // Only update state if component is still mounted
+                if (isMountedRef.current) {
+                  setEnrichedMap((prev) => ({ ...prev, [word.id]: enriched }));
+                }
               })
               .catch((err) => {
                 if (!__DEV__) {
@@ -144,14 +158,20 @@ export default function HomeScreen() {
                 }
                 // Remove from started ref to allow retry on next refresh
                 enrichmentStartedRef.current.delete(word.id);
-                setAiErrorIds((prev) => new Set(prev).add(word.id));
+                // Only update state if component is still mounted
+                if (isMountedRef.current) {
+                  setAiErrorIds((prev) => new Set(prev).add(word.id));
+                }
               })
               .finally(() => {
-                setAiLoadingIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(word.id);
-                  return next;
-                });
+                // Only update state if component is still mounted
+                if (isMountedRef.current) {
+                  setAiLoadingIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(word.id);
+                    return next;
+                  });
+                }
               });
           });
         }
