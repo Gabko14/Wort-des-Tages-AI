@@ -20,6 +20,9 @@ Ambitionierte Personen mit guten Sprachkenntnissen, die ihren deutschen Wortscha
 - Einstellbare Menge und Art der Wörter
 - Benachrichtigungsfunktion
 - KI-gestützte Aufgaben zur korrekten Wortanwendung (Premium)
+- Streak-Tracking für tägliche Nutzung
+- In-App-Subscriptions für Premium-Features
+- OTA-Updates für schnelle Bugfixes
 
 ---
 
@@ -28,70 +31,85 @@ Ambitionierte Personen mit guten Sprachkenntnissen, die ihren deutschen Wortscha
 ### Komponentenübersicht
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        APP (Expo)                           │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ HomeScreen  │  │  Settings   │  │    WordCard         │  │
-│  │  (index)    │  │   Screen    │  │   (Komponente)      │  │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
-│         │                │                     │            │
-│         ▼                ▼                     ▼            │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │                   SERVICES LAYER                        ││
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────────────┐   ││
-│  │  │wordService │ │settingsServ│ │  premiumService    │   ││
-│  │  └─────┬──────┘ └─────┬──────┘ └─────────┬──────────┘   ││
-│  │        │              │                  │              ││
-│  │  ┌─────▼──────┐ ┌─────▼──────┐    ┌──────▼─────────┐    ││
-│  │  │  database  │ │AsyncStorage│    │   aiService    │    ││
-│  │  │  (SQLite)  │ │  (Cache)   │    │                │    ││
-│  │  └────────────┘ └────────────┘    └────────────────┘    ││
-│  └─────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                           APP (Expo)                                │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────┐  │
+│  │ HomeScreen  │  │  Settings   │  │    SubscriptionScreen       │  │
+│  │  (index)    │  │   Screen    │  │    (Premium-Abo)            │  │
+│  └──────┬──────┘  └──────┬──────┘  └──────────────┬──────────────┘  │
+│         │                │                        │                 │
+│         ▼                ▼                        ▼                 │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │                      SERVICES LAYER                             ││
+│  │  ┌────────────┐ ┌──────────────┐ ┌──────────────────────────┐   ││
+│  │  │wordService │ │settingsServ  │ │     premiumService       │   ││
+│  │  └─────┬──────┘ └──────┬───────┘ └────────────┬─────────────┘   ││
+│  │        │               │                      │                 ││
+│  │  ┌─────▼──────┐  ┌─────▼──────┐  ┌────────────▼─────────────┐   ││
+│  │  │  database  │  │AsyncStorage│  │    subscriptionService   │   ││
+│  │  │  (SQLite)  │  │  (Cache)   │  │      (In-App Purchase)   │   ││
+│  │  └────────────┘  └────────────┘  └──────────────────────────┘   ││
+│  │                                                                 ││
+│  │  ┌────────────┐ ┌──────────────┐ ┌──────────────────────────┐   ││
+│  │  │ aiService  │ │deviceService │ │  gamificationService     │   ││
+│  │  └────────────┘ └──────────────┘ │  (Streaks, Quiz, Stats)  │   ││
+│  │                                  └──────────────────────────┘   ││
+│  │  ┌────────────────────┐ ┌───────────────────────────────────┐   ││
+│  │  │notificationService │ │        updateService              │   ││
+│  │  │(Push-Benachr.)     │ │     (OTA-Updates Info)            │   ││
+│  │  └────────────────────┘ └───────────────────────────────────┘   ││
+│  └─────────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  EDGE FUNCTIONS (Supabase)                  │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────┐                                        │
-│  │  ai-enrich      │                                        │
-│  │  Edge Function  │                                        │
-│  └────────┬────────┘                                        │
-│           │                                                 │
-│           ▼                                                 │
-│  ┌─────────────────┐                                        │
-│  │   OpenAI API    │                                        │
-│  │    (gpt-5)      │                                        │
-│  └─────────────────┘                                        │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Optional (für Play Store, ausserhalb Schulprojekt)  │    │
-│  │  ┌─────────────────┐  ┌─────────────┐               │    │
-│  │  │check-entitlement│  │grant-premium│               │    │
-│  │  │  Edge Function  │  │Edge Function│               │    │
-│  │  └────────┬────────┘  └──────┬──────┘               │    │
-│  │           └──────┬───────────┘                      │    │
-│  │                  ▼                                  │    │
-│  │  ┌──────────────────────────────────┐               │    │
-│  │  │    PostgreSQL (entitlements)     │               │    │
-│  │  └──────────────────────────────────┘               │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                    EDGE FUNCTIONS (Supabase)                        │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐                                                │
+│  │  ai-enrich      │                                                │
+│  │  Edge Function  │                                                │
+│  └────────┬────────┘                                                │
+│           │                                                         │
+│           ▼                                                         │
+│  ┌─────────────────┐                                                │
+│  │   OpenAI API    │                                                │
+│  │  (gpt-4o-mini)  │                                                │
+│  └─────────────────┘                                                │
+│                                                                     │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │               Premium & Play Store Integration                 │ │
+│  │  ┌─────────────────┐  ┌─────────────┐  ┌───────────────────┐   │ │
+│  │  │check-entitlement│  │grant-premium│  │google-play-webhook│   │ │
+│  │  │  Edge Function  │  │Edge Function│  │  (RTDN Handler)   │   │ │
+│  │  └────────┬────────┘  └──────┬──────┘  └─────────┬─────────┘   │ │
+│  │           └──────────────────┼───────────────────┘             │ │
+│  │                              ▼                                 │ │
+│  │  ┌──────────────────────────────────────────────────────────┐  │ │
+│  │  │              PostgreSQL (entitlements)                   │  │ │
+│  │  └──────────────────────────────────────────────────────────┘  │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Komponentenbeschreibung
 
-| Komponente      | Typ           | Verantwortung                                                 |
-| --------------- | ------------- | ------------------------------------------------------------- |
-| HomeScreen      | Screen        | Zeigt tägliche Wörter, Pull-to-Refresh, AI-Enrichment         |
-| SettingsScreen  | Screen        | Benutzereinstellungen (Wortanzahl, Typen, Benachrichtigungen) |
-| WordCard        | UI-Komponente | Einzelne Wortkarte mit Definition und Beispielsatz            |
-| wordService     | Service       | Wort-Generierung und -Speicherung                             |
-| settingsService | Service       | Laden/Speichern von Einstellungen                             |
-| premiumService  | Service       | Premium-Status prüfen (wirft `AppError` bei Fehlern)          |
-| aiService       | Service       | KI-Anreicherung mit Caching und Retry-Logik                   |
-| database        | Service       | SQLite-Singleton für lokale Wortdatenbank                     |
+| Komponente          | Typ           | Verantwortung                                                       |
+| ------------------- | ------------- | ------------------------------------------------------------------- |
+| HomeScreen          | Screen        | Zeigt tägliche Wörter, Pull-to-Refresh, AI-Enrichment, Streak-Badge |
+| SettingsScreen      | Screen        | Benutzereinstellungen (Wortanzahl, Typen, Benachrichtigungen)       |
+| SubscriptionScreen  | Screen        | Premium-Abo-Auswahl und Kauf (monatlich/jährlich)                   |
+| WordCard            | UI-Komponente | Einzelne Wortkarte mit Definition und Beispielsatz                  |
+| wordService         | Service       | Wort-Generierung und -Speicherung                                   |
+| settingsService     | Service       | Laden/Speichern von Einstellungen                                   |
+| premiumService      | Service       | Premium-Status prüfen (wirft `AppError` bei Fehlern)                |
+| aiService           | Service       | KI-Anreicherung mit Caching und Retry-Logik                         |
+| database            | Service       | SQLite-Singleton für lokale Wortdatenbank                           |
+| deviceService       | Service       | Generiert und cached eindeutige Device-ID (Android/iOS)             |
+| gamificationService | Service       | Streak-Tracking, Quiz-Abschlüsse, Statistiken                       |
+| notificationService | Service       | Push-Benachrichtigungen planen und verwalten                        |
+| subscriptionService | Service       | In-App-Purchase-Logik (expo-iap), Abo-Verwaltung                    |
+| updateService       | Service       | OTA-Update-Informationen (Expo Updates)                             |
 
 ---
 
@@ -133,24 +151,36 @@ Die App folgt einer **3-Schichten-Architektur**:
 
 ### Frontend (Mobile App)
 
-| Technologie  | Version | Zweck                             |
-| ------------ | ------- | --------------------------------- |
-| React Native | 0.81    | Cross-Platform Mobile Framework   |
-| Expo SDK     | 54      | Development Tooling & Native APIs |
-| Expo Router  | 6       | File-based Navigation             |
-| TypeScript   | 5.9     | Type Safety                       |
-| expo-sqlite  | 16      | Lokale Datenbank                  |
-| AsyncStorage | 2.2     | Key-Value Storage                 |
+| Technologie        | Version | Zweck                                  |
+| ------------------ | ------- | -------------------------------------- |
+| React Native       | 0.81    | Cross-Platform Mobile Framework        |
+| Expo SDK           | 54      | Development Tooling & Native APIs      |
+| Expo Router        | 6       | File-based Navigation                  |
+| TypeScript         | 5.9     | Type Safety                            |
+| expo-sqlite        | 16      | Lokale Datenbank                       |
+| AsyncStorage       | 2.2     | Key-Value Storage                      |
+| expo-iap           | 3.3     | In-App Purchases (Google Play Billing) |
+| expo-notifications | 0.32    | Push-Benachrichtigungen                |
+| expo-updates       | 29      | OTA-Updates                            |
+| Sentry             | 7.2     | Error Tracking & Monitoring            |
 
 ### Backend (Supabase Edge Functions)
 
-| Technologie              | Zweck                         |
-| ------------------------ | ----------------------------- |
-| Supabase Edge Functions  | Serverless API (Deno Runtime) |
-| OpenAI API (gpt-4o-mini) | KI-Wortanreicherung           |
-| PostgreSQL\*             | Entitlements-Datenbank        |
+| Technologie              | Zweck                                            |
+| ------------------------ | ------------------------------------------------ |
+| Supabase Edge Functions  | Serverless API (Deno Runtime)                    |
+| OpenAI API (gpt-4o-mini) | KI-Wortanreicherung                              |
+| PostgreSQL               | Entitlements-Datenbank                           |
+| Google Play RTDN         | Real-time Developer Notifications für Abo-Status |
 
-_\* Vorbereitet für Play Store Release (ausserhalb Schulprojekt)_
+**Edge Functions im Detail:**
+
+| Function            | Zweck                                                          |
+| ------------------- | -------------------------------------------------------------- |
+| ai-enrich           | KI-Anreicherung von Wörtern via OpenAI                         |
+| check-entitlement   | Prüft Premium-Status eines Geräts                              |
+| grant-premium       | Aktiviert Premium für ein Gerät (Admin/Dev)                    |
+| google-play-webhook | Empfängt Play Store Abo-Events (Kauf, Verlängerung, Kündigung) |
 
 ### Development & CI/CD
 
@@ -195,14 +225,20 @@ Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für Details.
 | Supabase     | Backend-Services     | Mittel (App funktioniert offline) |
 | OpenAI       | KI-Features          | Niedrig (nur Premium)             |
 | DWDS         | Wortdatenbank-Quelle | Einmalig (bereits gebündelt)      |
+| Google Play  | In-App-Subscriptions | Mittel (Premium-Feature)          |
+| Sentry       | Error Tracking       | Niedrig (nur Monitoring)          |
 
 ### Externe Services
 
-| Service            | Anbieter              | Fallback                          |
-| ------------------ | --------------------- | --------------------------------- |
-| AI Enrichment      | OpenAI (via Supabase) | Wörter ohne AI-Erklärung          |
-| Premium Check      | Supabase              | Premium deaktiviert (UI-Fallback) |
-| Push Notifications | Expo                  | Keine (Feature deaktiviert)       |
+| Service              | Anbieter              | Fallback                          |
+| -------------------- | --------------------- | --------------------------------- |
+| AI Enrichment        | OpenAI (via Supabase) | Wörter ohne AI-Erklärung          |
+| Premium Check        | Supabase              | Premium deaktiviert (UI-Fallback) |
+| Push Notifications   | Expo                  | Keine (Feature deaktiviert)       |
+| In-App Purchases     | Google Play           | Premium nicht kaufbar             |
+| Subscription Webhook | Google Cloud Pub/Sub  | Manuelle Entitlement-Verwaltung   |
+| Error Tracking       | Sentry                | Keine (nur Monitoring)            |
+| OTA Updates          | Expo Updates          | Nur Store-Updates                 |
 
 ---
 
@@ -223,14 +259,16 @@ Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für Details.
 │ frequenzklasse      │       └─────────────────────────┘
 └─────────────────────┘
 
-┌─────────────────────┐
-│   entitlements      │  (Supabase PostgreSQL)
-├─────────────────────┤
-│ device_id (PK)      │
-│ is_premium          │
-│ premium_source      │
-│ purchase_token      │
-└─────────────────────┘
+┌─────────────────────┐                    ┌─────────────────────┐
+│   entitlements      │  (Supabase)        │   Gamification      │  (AsyncStorage)
+├─────────────────────┤                    ├─────────────────────┤
+│ device_id (PK)      │                    │ streak_data         │
+│ is_premium          │                    │   - currentStreak   │
+│ premium_source      │                    │   - longestStreak   │
+│ purchase_token      │                    │   - lastCompletedAt │
+│ expires_at          │                    │ quiz_completions[]  │
+│ subscription_id     │                    │ gamification_stats  │
+└─────────────────────┘                    └─────────────────────┘
 ```
 
 ### Datenfluss
@@ -247,6 +285,22 @@ Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für Details.
               │ AI Enrich?  │───▶│ Supabase │──▶│  OpenAI  │
               │ (Premium)   │    │   Edge   │    │   API    │
               └─────────────┘    └──────────┘    └──────────┘
+```
+
+**Subscription-Datenfluss:**
+
+```
+┌──────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────┐
+│  User    │───▶│ Subscription │───▶│ Google Play  │───▶│  Kauf    │
+│  kauft   │    │   Screen     │    │ Billing API  │    │ bestätigt│
+└──────────┘    └──────────────┘    └──────────────┘    └────┬─────┘
+                                                             │
+                     ┌───────────────────────────────────────┘
+                     ▼
+              ┌──────────────┐    ┌──────────────┐    ┌──────────┐
+              │ Cloud PubSub │───▶│ RTDN Webhook │───▶│ Supabase │
+              │   (Google)   │    │ Edge Function│    │entitlemnt│
+              └──────────────┘    └──────────────┘    └──────────┘
 ```
 
 ### DSGVO-Konformität
@@ -281,15 +335,49 @@ Die App verwendet **keine klassische Benutzerauthentifizierung**:
 
 ### Autorisierung (Premium-System)
 
-> **Hinweis:** Das Premium-System ist vorbereitet für einen späteren Play Store Release. Die Authentifizierung und Kaufvalidierung würde über die Play Store APIs erfolgen. Im Rahmen des Schulprojekts wird Premium nur über einen Dev-Button aktiviert.
+Das Premium-System ist vollständig implementiert mit Google Play In-App-Subscriptions:
 
-**Geplanter Flow (für Play Store):**
+**Subscription-Optionen:**
+
+| SKU                 | Laufzeit  | Beschreibung      |
+| ------------------- | --------- | ----------------- |
+| wdt_premium_monthly | Monatlich | Premium-Monatsabo |
+| wdt_premium_yearly  | Jährlich  | Premium-Jahresabo |
+
+**Kauf-Flow:**
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   App       │────▶│  Supabase   │────▶│ entitlements│
-│ (Device-ID) │     │  Function   │     │   Tabelle   │
-└─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐     ┌─────────────────┐     ┌─────────────────────┐
+│   App       │────▶│ subscriptionSrv │────▶│   Google Play       │
+│ (expo-iap)  │     │                 │     │   Billing API       │
+└─────────────┘     └─────────────────┘     └──────────┬──────────┘
+                                                       │
+                                                       ▼
+                                           ┌─────────────────────┐
+                                           │  Cloud Pub/Sub      │
+                                           │  (RTDN Webhook)     │
+                                           └──────────┬──────────┘
+                                                      │
+                                                      ▼
+┌─────────────┐     ┌─────────────────┐     ┌─────────────────────┐
+│   App       │◀────│  premiumService │◀────│ google-play-webhook │
+│ (Status)    │     │                 │     │   Edge Function     │
+└─────────────┘     └─────────────────┘     └──────────┬──────────┘
+                                                       │
+                                                       ▼
+                                           ┌─────────────────────┐
+                                           │   entitlements      │
+                                           │   (PostgreSQL)      │
+                                           └─────────────────────┘
+```
+
+**Entitlement-Prüfung:**
+
+```
+┌─────────────┐     ┌─────────────────┐     ┌─────────────────────┐
+│   App       │────▶│check-entitlement│────▶│    entitlements     │
+│ (Device-ID) │     │  Edge Function  │     │      Tabelle        │
+└─────────────┘     └─────────────────┘     └─────────────────────┘
                            │
                            ▼
                     ┌─────────────┐
@@ -298,12 +386,12 @@ Die App verwendet **keine klassische Benutzerauthentifizierung**:
                     └─────────────┘
 ```
 
-| Rolle        | Berechtigung                                       |
-| ------------ | -------------------------------------------------- |
-| Free User    | Tägliche Wörter, Einstellungen, Benachrichtigungen |
-| Premium User | + KI-Definitionen, + Beispielsätze                 |
+| Rolle        | Berechtigung                                                 |
+| ------------ | ------------------------------------------------------------ |
+| Free User    | Tägliche Wörter, Einstellungen, Benachrichtigungen, Streaks  |
+| Premium User | + KI-Definitionen, + Beispielsätze, + erweiterte Statistiken |
 
-**Aktuell (Schulprojekt):** Premium wird über einen Dev-Button in den Einstellungen aktiviert.
+**Entwicklungsmodus:** Premium kann über `grant-premium` Edge Function für Tests aktiviert werden.
 
 ---
 
@@ -454,7 +542,9 @@ Die App verwendet **keine klassische Benutzerauthentifizierung**:
 | Environment Setup   | 17.09.2025 | ✅ Abgeschlossen | Infrastruktur-Setup (CI/CD, Linting, Testing)                                                |
 | Grundfunktionen     | 12.11.2025 | ✅ Abgeschlossen | MVP mit Kernfunktionen: App-Struktur, tägliche Wort-Generierung, UI, Datenspeicherung        |
 | Erweiterte Features | 30.11.2025 | ✅ Abgeschlossen | Benachrichtigungen, Benutzereinstellungen, konfigurierbare Wortoptionen                      |
-| KI-Integration      | 07.01.2026 | 🔄 In Arbeit     | KI-Features für erweiterte Lernfunktionen, kontextuelle Erklärungen, Performance-Optimierung |
+| KI-Integration      | 07.01.2026 | ✅ Abgeschlossen | KI-Features für erweiterte Lernfunktionen, kontextuelle Erklärungen, Performance-Optimierung |
+| Premium & IAP       | 07.01.2026 | ✅ Abgeschlossen | Google Play In-App-Subscriptions, Webhook-Integration, Entitlements                          |
+| Gamification        | 07.01.2026 | ✅ Abgeschlossen | Streak-Tracking, Quiz-Abschlüsse, Statistiken                                                |
 | Zusatz/Sonstiges    | -          | 📋 Offen         | Zusätzliche Features und Verbesserungen                                                      |
 
 <img src="./docs/screenshots/github-projects-roadmap.png" alt="Roadmap" width="950">
@@ -463,15 +553,18 @@ https://github.com/users/Gabko14/projects/11/views/4
 
 ### Feature-Timeline
 
-| Datum     | Feature                                        |
-| --------- | ---------------------------------------------- |
-| Aug 2025  | Projektstart                                   |
-| Sept 2025 | Projekt-Setup, Ziele definiert, CI/CD Pipeline |
-| Sept 2025 | Wort-Anzeige mit SQLite-Datenbank              |
-| Okt 2025  | Einstellungen UI mit AsyncStorage              |
-| Okt 2025  | Benachrichtigungen                             |
-| Nov 2025  | KI-Infrastruktur (Supabase, Premium)           |
-| Dez 2025  | KI-Anreicherung mit Caching                    |
+| Datum     | Feature                                            |
+| --------- | -------------------------------------------------- |
+| Aug 2025  | Projektstart                                       |
+| Sept 2025 | Projekt-Setup, Ziele definiert, CI/CD Pipeline     |
+| Sept 2025 | Wort-Anzeige mit SQLite-Datenbank                  |
+| Okt 2025  | Einstellungen UI mit AsyncStorage                  |
+| Okt 2025  | Benachrichtigungen                                 |
+| Nov 2025  | KI-Infrastruktur (Supabase, Premium)               |
+| Dez 2025  | KI-Anreicherung mit Caching                        |
+| Dez 2025  | In-App-Subscriptions (Google Play Billing)         |
+| Dez 2025  | Gamification (Streaks, Quiz-Tracking, Statistiken) |
+| Jan 2026  | Google Play RTDN Webhook, OTA-Updates              |
 
 ---
 
@@ -559,8 +652,10 @@ Siehe [DEPLOYMENT.md](DEPLOYMENT.md) für Details.
 
 ### Geplante Releases
 
-| Version | Features                                       | Status     |
-| ------- | ---------------------------------------------- | ---------- |
-| 1.0.0   | MVP: Wörter, Einstellungen, Benachrichtigungen | ✅ Fertig  |
-| 1.1.0   | Premium + KI-Anreicherung                      | ✅ Fertig  |
-| 1.2.0   | Quiz-Feature (geplant)                         | 🔜 Backlog |
+| Version | Features                                                   | Status     |
+| ------- | ---------------------------------------------------------- | ---------- |
+| 1.0.0   | MVP: Wörter, Einstellungen, Benachrichtigungen             | ✅ Fertig  |
+| 1.1.0   | Premium + KI-Anreicherung                                  | ✅ Fertig  |
+| 1.2.0   | Gamification (Streaks, Quiz-Tracking)                      | ✅ Fertig  |
+| 2.0.0   | In-App-Subscriptions, Google Play Integration, OTA-Updates | ✅ Fertig  |
+| 2.1.0   | Weitere Verbesserungen                                     | 🔜 Backlog |
