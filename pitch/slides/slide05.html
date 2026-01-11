@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #ffffff; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #F7F7F7;
+  font-family: Arial, sans-serif;
+  display: flex;
+}
+.nav-bar {
+  width: 50pt;
+  background: #0D1B2A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 15pt;
+}
+.nav-bar img {
+  width: 30pt;
+  height: 30pt;
+}
+.main {
+  flex: 1;
+  padding: 22pt 32pt 45pt 32pt;
+}
+.title-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16pt;
+}
+.title-icon {
+  width: 42pt;
+  height: 42pt;
+  background: #FFBE0B;
+  border-radius: 6pt;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15pt;
+}
+.title-icon p {
+  color: #0D1B2A;
+  font-size: 18pt;
+  font-weight: bold;
+  margin: 0;
+}
+h1 {
+  font-size: 32pt;
+  color: #0D1B2A;
+  margin: 0;
+  font-weight: bold;
+}
+.content-grid {
+  display: flex;
+  gap: 18pt;
+}
+.competitors-col {
+  flex: 1;
+}
+.section-label {
+  font-size: 18pt;
+  font-weight: bold;
+  color: #1B3A4B;
+  margin: 0 0 10pt 0;
+  text-transform: uppercase;
+}
+.competitor-card {
+  background: #ffffff;
+  padding: 12pt 14pt;
+  border-radius: 6pt;
+  margin-bottom: 10pt;
+  border-left: 3pt solid #1B3A4B;
+}
+.comp-name {
+  font-size: 18pt;
+  font-weight: bold;
+  color: #0D1B2A;
+  margin: 0 0 4pt 0;
+}
+.comp-type {
+  font-size: 18pt;
+  color: #1B3A4B;
+  margin: 0 0 4pt 0;
+}
+.comp-weakness {
+  font-size: 18pt;
+  color: #FFBE0B;
+  margin: 0;
+  font-weight: bold;
+}
+.advantage-col {
+  flex: 1;
+}
+.advantage-card {
+  background: #0D1B2A;
+  padding: 16pt;
+  border-radius: 6pt;
+  height: auto;
+  border-left: 4pt solid #3A86FF;
+}
+.advantage-title {
+  font-size: 18pt;
+  font-weight: bold;
+  color: #3A86FF;
+  margin: 0 0 12pt 0;
+}
+.advantage-item {
+  font-size: 18pt;
+  color: #F7F7F7;
+  margin: 0 0 8pt 0;
+  padding-left: 14pt;
+}
+.page-number {
+  position: absolute;
+  bottom: 8pt;
+  left: 0; right: 0; text-align: center;
+  font-size: 12pt;
+  color: #1B3A4B;
+}
+</style>
+</head>
+<body>
+<div class="nav-bar">
+  <img src="../assets/logo.png" />
+</div>
+<div class="main">
+  <div class="title-row">
+    <div class="title-icon"><p>vs</p></div>
+    <h1>Die Mitbewerber</h1>
+  </div>
+  <div class="content-grid">
+    <div class="competitors-col">
+      <p class="section-label">Konkurrenz</p>
+      <div class="competitor-card">
+        <p class="comp-name">Duden Wort des Tages</p>
+        <p class="comp-type">Newsletter / Website</p>
+        <p class="comp-weakness">Passiv, keine Uebungen</p>
+      </div>
+      <div class="competitor-card">
+        <p class="comp-name">Duolingo, Babbel</p>
+        <p class="comp-type">Gamifiziertes Lernen</p>
+        <p class="comp-weakness">Nur fuer Anfaenger</p>
+      </div>
+    </div>
+    <div class="advantage-col">
+      <p class="section-label">Unsere Vorteile</p>
+      <div class="advantage-card">
+        <p class="advantage-title">Warum wir besser sind</p>
+        <p class="advantage-item">+ KI-gestuetzte Personalisierung</p>
+        <p class="advantage-item">+ Aktive Uebungen statt passives Lesen</p>
+        <p class="advantage-item">+ Speziell fuer Fortgeschrittene entwickelt</p>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="page-number">6</p>
+</body>
+</html>

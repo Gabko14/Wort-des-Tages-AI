@@ -1,10 +1,47 @@
-# Vorlage Pitch Gate 2
+# M241 LB3 Pitch für Stage Gate 2
 
-## Ziel und Inhalt
+## Auftrag
+
+**Erstellen Sie den Pitch, der Ihr Projekt durch Gate 2 bringen soll!**
 
 Fassen Sie die Erkenntnisse und Ergebnisse aus den Phasen **«Scoping»** und **«Aufbau Business Case»** prägnant und überzeugend zusammen.
 
-**Zielpublikum:** Die Klasse, die Sie überzeugen müssen, dass Ihr Projekt Gate 2 besteht und sich für die nächste Phase "Entwicklung, Testing, Validierung" qualifiziert!
+**Zielpublikum:** Die Klasse, die Sie überzeugen müssen, dass Ihr Projekt sich für die nächste Phase "Entwicklung, Testing, Validierung" qualifiziert!
+
+| | |
+|---|---|
+| **Ziel** | Sie beschreiben Ihr Projekt kurz und prägnant. |
+| **SF** | Team, vortragen anlässlich Gate 2 |
+| **Zeit** | 60 Minuten |
+
+---
+
+## Was ist ein Pitch?
+
+- **Max. 10-minütige** Präsentation für Interessenten: Gate-Keeper
+- Soll neugierig machen
+- Soll genügend Information vermitteln, damit das Gegenüber sich näher mit der Sache beschäftigt und Ihnen einen Termin gibt
+- Wird in der Regel gefolgt von Fragen und Antworten
+
+---
+
+## Wo Sie überzeugen müssen
+
+Um das Gate 2 erfolgreich bestehen zu können, muss Ihr Pitch in diesen Bereichen überzeugen:
+
+- Kundennutzen / Wettbewerbsvorteil
+- Marktattraktivität
+- Machbarkeit (technisch, rechtlich, organisatorisch, …)
+- Wirtschaftliche Attraktivität
+- Show-Stoppers
+- (Bauchgefühl)
+
+---
+
+## Mögliche Hilfsmittel
+
+- Pitchen in Form von Videos: [Video Pitch Template (Editable)](https://www.youtube.com/watch?v=7Cy_1gdyyBU)
+- Weiterführende Infos: [Pitch-Präsentation: Das Publikum in kurzer Zeit überzeugen!](https://www.presentationload.de/blog/pitch-praesentation/)
 
 ---
 
@@ -154,6 +191,10 @@ Fassen Sie die Erkenntnisse und Ergebnisse aus den Phasen **«Scoping»** und **
 - Warum habt Ihr selbst bisher Zeit (und Geld) investiert?
 - Zeigt Enthusiasmus und Selbstvertrauen!
 
+### Q&A
+- Übersicht über alle Seiten (Links) + Ergänzungsmaterial
+- Gut strukturierte weitere Seiten
+
 ---
 
 ## Zusammenfassung / Übersicht und Q & A
@@ -166,6 +207,33 @@ Fassen Sie die Erkenntnisse und Ergebnisse aus den Phasen **«Scoping»** und **
 | Bisheriger Aufwand | Absatzkanäle | Geschäftsmodell | Team-CVs |
 | | Mitbewerber | Aktionäre | Skalierung/Wachstum |
 | | Kunden | Bewertung | |
+
+---
+
+## Bewertung
+
+Bewertet wird das Dokument ergänzt mit der mündlichen Präsentation.
+
+**Punktevergabe:**
+- **2 Punkte:** wenn es so ist, "wie es sein soll"
+- **3 Punkte:** begründ- und belegbar mehr, übertrifft die Erwartung
+- **1 Punkt:** begründ- und belegbar schlechter
+- **0 Punkte:** unbrauchbar oder nicht vorhanden
+
+**Maximale Punktzahl:** 3 × 9 = **27 Punkte**
+
+| Nr. | Bewertungskriterien (Leitfragen) |
+|:---:|----------------------------------|
+| 0 | **Pünktlichkeit:** -3 Punkte pro Tag |
+| 1 | **Kreativität:** Die Präsentation ist originell einmalig. Die Art und Weise der Präsentation hat etwas mit dem Produkt / Projekt zu tun. |
+| 2 | **Zielpublikum:** Das Zielpublikum und der Zweck der Präsentation sind genannt und die Präsentation ist darauf ausgerichtet. |
+| 3 | **Gestaltung:** Die Gestaltung entspricht den Empfehlungen, Abweichungen sind begründet: Produktlogo auf jeder Seite, Schlichte Gestaltung, Grafiken zur Illustration, Fehlerfrei, Keine Animationen, Kleinste Schriftart: 18 Punkt, Eine/zwei Strukturebenen, Seitenzahlen, Keine Abkürzungen/Fachjargon |
+| 4 | **Prototyp:** Der Prototyp ist prägnant beschrieben: Welches Problem löst das Produkt / Projekt? Es werden keine Plattitüden / Buzzwords genannt. |
+| 5 | **Business Case:** Der Business Case ist prägnant beschrieben: Wie verdienen Sie Geld damit? Wie gross ist der Markt? Es werden keine Plattitüden / Buzzwords genannt. |
+| 6 | **Team-Kompetenz:** Die Kompetenz des Teams ist begründet nachvollziehbar. Es werden keine Plattitüden / Buzzwords genannt. |
+| 7 | **Schutz:** Können Sie sich vor anderen Leuten, die die gleiche Idee haben, schützen? Es werden keine Plattitüden / Buzzwords genannt. |
+| 8 | **Zeitmanagement:** Die Präsentation dauert max. 10 Minuten. |
+| 9 | **Struktur:** Struktur und Aufbau entspricht der Empfehlung, Abweichungen sind begründet: Seite 0 (Titel), Seite 1 (Problem), Seite 2 (Lösung), Seite 3 (Warum es funktioniert), Seite 4 (Markt), Seite 5 (Mitbewerber), Seite 6 (Geschäftsmodell), Seite 7 (Umsetzung), Seite 8 (Finanzen), Seite 9 (Team), Seite 10 (Fazit), Q&A + Ergänzungsmaterial |
 
 ---
 

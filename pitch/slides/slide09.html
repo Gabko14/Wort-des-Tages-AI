@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #ffffff; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #F7F7F7;
+  font-family: Arial, sans-serif;
+  display: flex;
+}
+.nav-bar {
+  width: 50pt;
+  background: #0D1B2A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 15pt;
+}
+.nav-bar img {
+  width: 30pt;
+  height: 30pt;
+}
+.main {
+  flex: 1;
+  padding: 18pt 28pt 45pt 28pt;
+}
+.title-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12pt;
+}
+.title-icon {
+  width: 42pt;
+  height: 42pt;
+  background: #3A86FF;
+  border-radius: 6pt;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15pt;
+}
+.title-icon p {
+  color: #F7F7F7;
+  font-size: 18pt;
+  font-weight: bold;
+  margin: 0;
+}
+h1 {
+  font-size: 32pt;
+  color: #0D1B2A;
+  margin: 0;
+  font-weight: bold;
+}
+.team-grid {
+  display: flex;
+  gap: 12pt;
+  margin-bottom: 10pt;
+}
+.team-card {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 6pt;
+  overflow: hidden;
+}
+.team-header {
+  background: #0D1B2A;
+  padding: 8pt;
+  text-align: center;
+}
+.team-name {
+  font-size: 18pt;
+  font-weight: bold;
+  color: #F7F7F7;
+  margin: 0;
+}
+.team-body {
+  padding: 8pt;
+  text-align: center;
+}
+.team-role {
+  font-size: 18pt;
+  color: #1B3A4B;
+  margin: 0 0 6pt 0;
+}
+.belbin-tag {
+  background: #3A86FF;
+  padding: 3pt 10pt;
+  border-radius: 10pt;
+  display: inline-block;
+}
+.belbin-tag p {
+  font-size: 18pt;
+  color: #F7F7F7;
+  margin: 0;
+  font-weight: bold;
+}
+.team-strength {
+  font-size: 18pt;
+  color: #3A86FF;
+  margin: 5pt 0 0 0;
+}
+.team-weakness {
+  font-size: 18pt;
+  color: #FFBE0B;
+  margin: 3pt 0 0 0;
+}
+.values-card {
+  background: #0D1B2A;
+  padding: 10pt 16pt;
+  border-radius: 6pt;
+  text-align: center;
+  border-left: 4pt solid #FFBE0B;
+}
+.values-label {
+  font-size: 18pt;
+  color: #FFBE0B;
+  margin: 0 0 4pt 0;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.values-text {
+  font-size: 18pt;
+  color: #F7F7F7;
+  margin: 0;
+}
+.page-number {
+  position: absolute;
+  bottom: 8pt;
+  left: 0; right: 0; text-align: center;
+  font-size: 12pt;
+  color: #1B3A4B;
+}
+</style>
+</head>
+<body>
+<div class="nav-bar">
+  <img src="../assets/logo.png" />
+</div>
+<div class="main">
+  <div class="title-row">
+    <div class="title-icon"><p>***</p></div>
+    <h1>Team</h1>
+  </div>
+  <div class="team-grid">
+    <div class="team-card">
+      <div class="team-header">
+        <p class="team-name">Gabriel</p>
+      </div>
+      <div class="team-body">
+        <p class="team-role">Entwicklung und DevOps</p>
+        <div class="belbin-tag"><p>Koordinator</p></div>
+        <p class="team-strength">Uebersicht, Zielorientierung</p>
+        <p class="team-weakness">Delegiert manchmal zu schnell</p>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-header">
+        <p class="team-name">Ayan</p>
+      </div>
+      <div class="team-body">
+        <p class="team-role">Projektmanagement</p>
+        <div class="belbin-tag"><p>Umsetzer</p></div>
+        <p class="team-strength">Strukturiert, zuverlaessig</p>
+        <p class="team-weakness">Braucht klare Vorgaben</p>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-header">
+        <p class="team-name">Raphael</p>
+      </div>
+      <div class="team-body">
+        <p class="team-role">Qualitaetsmanagement</p>
+        <div class="belbin-tag"><p>Umsetzer</p></div>
+        <p class="team-strength">Technisch, loesungsorientiert</p>
+        <p class="team-weakness">Zu detailorientiert</p>
+      </div>
+    </div>
+  </div>
+  <div class="values-card">
+    <p class="values-label">Unsere Werte</p>
+    <p class="values-text">Lernen - Verlaesslichkeit - Kreativitaet - Ehrlichkeit - Empathie</p>
+  </div>
+</div>
+<p class="page-number">10</p>
+</body>
+</html>

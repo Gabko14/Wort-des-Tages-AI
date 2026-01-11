@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #ffffff; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0D1B2A;
+  font-family: Arial, sans-serif;
+  display: flex;
+}
+.sidebar {
+  width: 180pt;
+  background: #1B3A4B;
+  padding: 40pt 20pt;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 4pt solid #3A86FF;
+}
+.sidebar img {
+  width: 70pt;
+  height: 70pt;
+  margin-bottom: 15pt;
+}
+.tagline {
+  font-size: 18pt;
+  color: #FFBE0B;
+  text-align: center;
+  font-style: italic;
+  margin: 0;
+}
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 35pt 40pt 45pt 40pt;
+}
+h1 {
+  font-size: 28pt;
+  color: #F7F7F7;
+  margin: 0 0 20pt 0;
+  font-weight: bold;
+}
+.reason-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14pt;
+}
+.check-box {
+  width: 26pt;
+  height: 26pt;
+  background: #3A86FF;
+  border-radius: 4pt;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14pt;
+  flex-shrink: 0;
+}
+.check-box p {
+  color: #F7F7F7;
+  font-size: 18pt;
+  font-weight: bold;
+  margin: 0;
+}
+.reason-text {
+  font-size: 18pt;
+  color: #F7F7F7;
+  margin: 0;
+}
+.vision-card {
+  background: #1B3A4B;
+  padding: 16pt 20pt;
+  border-radius: 6pt;
+  border-left: 4pt solid #FFBE0B;
+  margin-top: 20pt;
+}
+.vision-text {
+  font-size: 18pt;
+  color: #F7F7F7;
+  margin: 0;
+  font-style: italic;
+}
+.page-number {
+  position: absolute;
+  bottom: 8pt;
+  left: 0; right: 0; text-align: center;
+  font-size: 12pt;
+  color: #3A86FF;
+}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <img src="../assets/logo.png" />
+  <p class="tagline">1 Wort besser am Tag</p>
+</div>
+<div class="main">
+  <h1>Warum Wort des Tages AI?</h1>
+  <div class="reason-item">
+    <div class="check-box"><p>+</p></div>
+    <p class="reason-text">Echte Marktluecke fuer Fortgeschrittene</p>
+  </div>
+  <div class="reason-item">
+    <div class="check-box"><p>+</p></div>
+    <p class="reason-text">Wir sind selbst die Zielgruppe</p>
+  </div>
+  <div class="reason-item">
+    <div class="check-box"><p>+</p></div>
+    <p class="reason-text">Funktionierender Prototyp vorhanden</p>
+  </div>
+  <div class="vision-card">
+    <p class="vision-text">Jeder Tag eine Chance, die eigene Sprache zu verbessern - ein Wort nach dem anderen.</p>
+  </div>
+</div>
+<p class="page-number">11</p>
+</body>
+</html>
